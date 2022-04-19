@@ -1,78 +1,56 @@
-import fs from "node:fs"
+import fs from "node:fs/promises"
 import path from "node:path"
 
-const lib = {
-  baseDir: path.join(process.cwd(), ".data"),
+const baseDir = path.join(process.cwd(), ".data")
+
+async function fileOpen(dir, file, data) {
+  let fileHandle
+  try {
+    fileHandle = await fs.open(path.join(baseDir, dir, `${file}.json`), "wx")
+    await fileHandle.writeFile(JSON.stringify(data))
+  } catch (error) {
+    console.error(`Got an error trying to write to a file: ${error.message}`)
+  } finally {
+    fileHandle.close()
+  }
 }
 
-lib.create = (dir, file, data, callback) => {
-  fs.open(path.join(lib.baseDir, dir, `${file}.json`), "wx", (error, fd) => {
-    if (!error && fd) {
-      fs.writeFile(fd, JSON.stringify(data), (error) => {
-        if (!error) {
-          fs.close(fd, (error) => {
-            if (!error) {
-              callback(false)
-            } else {
-              callback("Error closing new file")
-            }
-          })
-        } else {
-          callback("Error writing to a new file")
-        }
-      })
-    } else {
-      callback("Could not crate a new file, it may already exist")
-    }
-  })
+async function fileUpdate(dir, file, data) {
+  let fileHandle
+  try {
+    fileHandle = await fs.open(path.join(baseDir, dir, `${file}.json`), "r+")
+    await fileHandle.truncate()
+    await fileHandle.writeFile(JSON.stringify(data))
+  } catch (error) {
+    console.error(`Got an error trying to write to a file: ${error.message}`)
+  } finally {
+    fileHandle.close()
+  }
 }
 
-lib.read = (dir, file, callback) => {
-  fs.readFile(
-    path.join(lib.baseDir, dir, `${file}.json`),
-    "utf-8",
-    (error, data) => {
-      callback(error, data)
-    }
-  )
+async function fileRead(dir, file) {
+  try {
+    const data = await fs.readFile(
+      path.join(baseDir, dir, `${file}.json`),
+      "utf-8"
+    )
+    return data
+  } catch (error) {
+    console.error(`Got an error trying to read the file: ${error.message}`)
+  }
 }
 
-lib.update = (dir, file, data, callback) => {
-  fs.open(path.join(lib.baseDir, dir, `${file}.json`), "r+", (error, fd) => {
-    if (!error && fd) {
-      fs.ftruncate(fd, (error) => {
-        if (!error) {
-          fs.writeFile(fd, JSON.stringify(data), (error) => {
-            if (!error) {
-              fs.close(fd, (error) => {
-                if (!error) {
-                  callback(false)
-                } else {
-                  callback("Error closing the file")
-                }
-              })
-            } else {
-              callback("Error writing to existing file")
-            }
-          })
-        } else {
-          callback("Error truncating file")
-        }
-      })
-    } else {
-      callback("Could not open the file for updating, it may not existing yet")
-    }
-  })
+async function fileDelete(dir, file) {
+  try {
+    await fs.unlink(path.join(baseDir, dir, `${file}.json`))
+  } catch (error) {
+    console.error(`Got an error trying to delete file: ${error.message}`)
+  }
 }
 
-lib.delete = (dir, file, callback) => {
-  fs.unlink(path.join(lib.baseDir, dir, `${file}.json`), (error) => {
-    if (!error) {
-      callback(false)
-    } else {
-      callback("Error deleting file")
-    }
-  })
+export default {
+  open: fileOpen,
+  read: fileRead,
+  update: fileUpdate,
+  delete: fileDelete,
 }
-
-export default lib
