@@ -27,7 +27,7 @@ const handler = (req, res) => {
     const chosenHandler = routes[pathname] ?? routes["notFound"]
     chosenHandler(data, (status = 200, payload = {}) => {
       res
-        .writeHead(status, { "Content-type": "application/json" })
+        .writeHead(status, { "Content-Type": "application/json" })
         .end(JSON.stringify(payload))
       console.log(`Status: ${status}, payload: ${JSON.stringify(payload)}`)
     })
