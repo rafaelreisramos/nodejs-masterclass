@@ -4,31 +4,42 @@ import { StringDecoder } from "node:string_decoder"
 const handler = (req, res) => {
   const url = new URL(`${req.protocol}//${req.headers.host}${req.url}`)
   const pathname = url.pathname.replace(/^\//, "")
+  const method = req.method
+  const headers = req.headers
+  const searchParams = url.searchParams
   const decoder = new StringDecoder("utf-8")
 
-  let payload = {}
+  let buffer = {}
   req.on("data", (data) => {
-    payload += decoder.write(data)
+    buffer += decoder.write(data)
   })
   req.on("end", () => {
-    payload += decoder.end()
+    buffer += decoder.end()
+
+    const data = {
+      pathname,
+      method,
+      headers,
+      searchParams,
+      payload: buffer,
+    }
 
     const chosenHandler = routes[pathname] ?? routes["notFound"]
-    chosenHandler((status) => {
-      res.writeHead(status).end()
-      console.log(`Returning this response: ${status}`)
+    chosenHandler(data, (status = 200, payload = {}) => {
+      res
+        .writeHead(status, { "Content-type": "application/json" })
+        .end(JSON.stringify(payload))
+      console.log(`Status: ${status}, payload: ${JSON.stringify(payload)}`)
     })
-
-    console.log(`Returning this payload: ${payload}`)
   })
 }
 
 const routes = {
-  alive: (callback) => {
-    callback(200)
+  alive: (_, callback) => {
+    callback(200, { route: "alive" })
   },
 
-  notFound: (callback) => {
+  notFound: (_, callback) => {
     callback(404)
   },
 }
