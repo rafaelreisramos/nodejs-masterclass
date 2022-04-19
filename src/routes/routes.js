@@ -1,14 +1,25 @@
 import { URL } from "node:url"
+import { StringDecoder } from "node:string_decoder"
 
 const handler = (req, res) => {
   const url = new URL(`${req.protocol}//${req.headers.host}${req.url}`)
   const pathname = url.pathname.replace(/^\//, "")
+  const decoder = new StringDecoder("utf-8")
 
-  const chosenHandler = routes[pathname] ?? routes["notFound"]
+  let payload = {}
+  req.on("data", (data) => {
+    payload += decoder.write(data)
+  })
+  req.on("end", () => {
+    payload += decoder.end()
 
-  chosenHandler((status) => {
-    res.writeHead(status).end()
-    console.log("Returning this response:", status)
+    const chosenHandler = routes[pathname] ?? routes["notFound"]
+    chosenHandler((status) => {
+      res.writeHead(status).end()
+      console.log(`Returning this response: ${status}`)
+    })
+
+    console.log(`Returning this payload: ${payload}`)
   })
 }
 
