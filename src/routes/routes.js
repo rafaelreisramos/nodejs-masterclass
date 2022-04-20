@@ -1,15 +1,17 @@
 import { URL } from "node:url"
 import { StringDecoder } from "node:string_decoder"
+import usersRoutes from "./users.routes.js"
+import helpers from "../utils/helpers.js"
 
 const handler = (req, res) => {
   const url = new URL(`${req.protocol}//${req.headers.host}${req.url}`)
   const pathname = url.pathname.replace(/^\//, "")
-  const method = req.method
+  const method = req.method.toLowerCase()
   const headers = req.headers
   const searchParams = url.searchParams
   const decoder = new StringDecoder("utf-8")
 
-  let buffer = {}
+  let buffer = ""
   req.on("data", (data) => {
     buffer += decoder.write(data)
   })
@@ -21,7 +23,7 @@ const handler = (req, res) => {
       method,
       headers,
       searchParams,
-      payload: buffer,
+      payload: helpers.jsonParse(buffer),
     }
 
     const chosenHandler = routes[pathname] ?? routes["notFound"]
@@ -38,7 +40,7 @@ const routes = {
   alive: (_, callback) => {
     callback(200, { route: "alive" })
   },
-
+  users: usersRoutes,
   notFound: (_, callback) => {
     callback(404)
   },
