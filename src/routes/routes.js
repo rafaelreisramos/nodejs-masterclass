@@ -2,6 +2,7 @@ import { URL } from "node:url"
 import { StringDecoder } from "node:string_decoder"
 import usersRoutes from "./users.routes.js"
 import tokensRoutes from "./tokens.routes.js"
+import checksRoutes from "./checks.routes.js"
 import helpers from "../utils/helpers.js"
 
 const handler = (req, res) => {
@@ -42,6 +43,7 @@ const routes = {
   },
   users: usersRoutes,
   tokens: tokensRoutes,
+  checks: checksRoutes,
   notFound: (_, callback) => {
     callback(404)
   },

@@ -132,3 +132,4 @@ dist
 # fs database files
 .data/users/*.json
 .data/tokens/*.json
+.data/checks/*.json

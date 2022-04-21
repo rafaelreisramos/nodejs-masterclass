@@ -11,4 +11,5 @@ export default {
   httpsPrivateKey: process.env.SERVER_PRIVATE_KEY,
   name: currentEnv,
   hashSecret: process.env.HASH_SECRET,
+  maxChecks: process.env.MAX_CHECKS,
 }
