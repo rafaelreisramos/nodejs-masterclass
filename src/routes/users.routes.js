@@ -124,6 +124,21 @@ handler.delete = async function ({ searchParams, headers }, callback) {
   if (error) {
     return callback(500, { error: "Could not delete the specified user" })
   }
+
+  let { checks } = data
+  if (!validators.userChecks(checks)) checks = []
+  if (checks.length > 0) {
+    const errors = await Promise.all(
+      checks.map((id) => _data.delete("checks", id))
+    )
+    if (errors.reduce((total, v) => total && v, true)) {
+      return callback(500, {
+        error:
+          "Failed to delete checks from user. All checks may not have been deleted from the system successfully.",
+      })
+    }
+  }
+
   callback(200)
 }
 
