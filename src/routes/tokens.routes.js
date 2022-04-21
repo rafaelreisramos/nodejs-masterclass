@@ -21,7 +21,7 @@ const handler = {}
 
 handler.post = async function ({ payload }, callback) {
   if (!validators.token(payload)) {
-    callback(400, { error: "Missing required fields" })
+    return callback(400, { error: "Missing required fields" })
   }
 
   const { phone, password } = payload
