@@ -1,6 +1,7 @@
 import { URL } from "node:url"
 import { StringDecoder } from "node:string_decoder"
 import usersRoutes from "./users.routes.js"
+import tokensRoutes from "./tokens.routes.js"
 import helpers from "../utils/helpers.js"
 
 const handler = (req, res) => {
@@ -31,7 +32,6 @@ const handler = (req, res) => {
       res
         .writeHead(status, { "Content-Type": "application/json" })
         .end(JSON.stringify(payload))
-      console.log(`Status: ${status}, payload: ${JSON.stringify(payload)}`)
     })
   })
 }
@@ -41,6 +41,7 @@ const routes = {
     callback(200, { route: "alive" })
   },
   users: usersRoutes,
+  tokens: tokensRoutes,
   notFound: (_, callback) => {
     callback(404)
   },

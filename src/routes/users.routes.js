@@ -1,6 +1,7 @@
 import _data from "../lib/data.js"
 import helpers from "../utils/helpers.js"
 import validators from "../utils/validators.js"
+import { verifyToken } from "./tokens.routes.js"
 
 const routes = (data, callback) => {
   const methods = ["post", "get", "put", "delete"]
@@ -44,10 +45,18 @@ handler.post = async function ({ payload }, callback) {
   callback(201)
 }
 
-handler.get = async function ({ searchParams }, callback) {
+handler.get = async function ({ searchParams, headers }, callback) {
   const phone = searchParams.get("phone")
   if (!validators.phone(phone)) {
     return callback(400, { error: "Missing required field" })
+  }
+
+  const tokenId = headers.tokenid
+  const tokenIsValid = await verifyToken(tokenId, phone)
+  if (!tokenIsValid) {
+    return callback(403, {
+      error: "Missing required token in header or token is invalid",
+    })
   }
 
   const [_, data] = await _data.read("users", phone)
@@ -58,12 +67,19 @@ handler.get = async function ({ searchParams }, callback) {
   callback(200, data)
 }
 
-handler.put = async function ({ payload }, callback) {
+handler.put = async function ({ payload, headers }, callback) {
   if (!validators.userUpdate(payload)) {
     return callback(400, { error: "Missing required fields" })
   }
 
   const { firstName, lastName, password, phone } = payload
+  const tokenId = headers.tokenid
+  const tokenIsValid = await verifyToken(tokenId, phone)
+  if (!tokenIsValid) {
+    return callback(403, {
+      error: "Missing required token in header or token is invalid",
+    })
+  }
 
   const [_, data] = await _data.read("users", phone)
   if (!data) {
@@ -86,10 +102,18 @@ handler.put = async function ({ payload }, callback) {
   callback(200)
 }
 
-handler.delete = async function ({ searchParams }, callback) {
+handler.delete = async function ({ searchParams, headers }, callback) {
   const phone = searchParams.get("phone")
   if (!validators.phone(phone)) {
     return callback(400, { error: "Missing required field" })
+  }
+
+  const tokenId = headers.tokenid
+  const tokenIsValid = await verifyToken(tokenId, phone)
+  if (!tokenIsValid) {
+    return callback(403, {
+      error: "Missing required token in header or token is invalid",
+    })
   }
 
   const [_, data] = await _data.read("users", phone)

@@ -1,4 +1,4 @@
-import { createHmac } from "node:crypto"
+import { createHmac, randomUUID } from "node:crypto"
 import config from "../config.js"
 
 function hash(str) {
@@ -17,7 +17,12 @@ function jsonParse(str) {
   }
 }
 
+async function createRandomString() {
+  return randomUUID()
+}
+
 export default {
   hashPassword: hash,
   jsonParse,
+  createRandomString,
 }

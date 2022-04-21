@@ -24,6 +24,17 @@ function tosAgreementValidation(tosAgreement) {
   return true
 }
 
+const UUID_LENGTH = 36
+function tokenIdValidation(id) {
+  if (typeof id !== "string" || id.trim().length !== UUID_LENGTH) return false
+  return true
+}
+
+function refreshValidation(refresh) {
+  if (typeof refresh !== "boolean" && refresh !== true) return false
+  return true
+}
+
 function userValidation(user) {
   const { firstName, lastName, phone, password, tosAgreement } = user
 
@@ -53,8 +64,21 @@ function userUpdateValidation(user) {
   return true
 }
 
+function tokenValidation(params) {
+  const { phone, password } = params
+  return phoneValidation(phone) && passwordValidation(password)
+}
+
+function tokenRefreshValidation(params) {
+  const { id, refresh } = params
+  return tokenIdValidation(id) && refreshValidation(refresh)
+}
+
 export default {
   user: userValidation,
   phone: phoneValidation,
   userUpdate: userUpdateValidation,
+  token: tokenValidation,
+  tokenId: tokenIdValidation,
+  tokenRefresh: tokenRefreshValidation,
 }
