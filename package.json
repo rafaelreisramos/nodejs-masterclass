@@ -15,6 +15,7 @@
     "nodemon": "^2.0.15"
   },
   "dependencies": {
-    "dotenv": "^16.0.0"
+    "dotenv": "^16.0.0",
+    "dotenv-expand": "^8.0.3"
   }
 }
