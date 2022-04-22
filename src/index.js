@@ -1,3 +1,6 @@
+import dotenv from "dotenv"
+import { expand } from "dotenv-expand"
+expand(dotenv.config())
 import { httpServer, httpsServer } from "./server.js"
 import environment from "./config.js"
 

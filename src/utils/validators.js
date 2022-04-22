@@ -10,7 +10,10 @@ function lastNameValidation(lastName) {
 }
 
 function phoneValidation(phone) {
-  if (typeof phone !== "string" || phone.trim().length !== 10) return false
+  const regex = new RegExp(
+    /^(?:(?:\+)?(55)\s?)?(?:\(?([1-9][0-9])\)?\s?)(?:((?:9\d|[2-9])\d{3})\-?(\d{4}))$/
+  )
+  if (typeof phone !== "string" || !regex.test(phone.trim())) return false
   return true
 }
 
