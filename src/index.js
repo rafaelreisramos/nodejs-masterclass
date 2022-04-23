@@ -1,10 +1,10 @@
 import dotenv from "dotenv"
 import { expand } from "dotenv-expand"
 expand(dotenv.config())
-import initServer from "./server.js"
+import server from "./server.js"
 
 function app() {
-  initServer()
+  server.init()
 }
 
 app()
