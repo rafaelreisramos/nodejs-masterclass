@@ -1,17 +1,12 @@
 import dotenv from "dotenv"
 import { expand } from "dotenv-expand"
 expand(dotenv.config())
-import { httpServer, httpsServer } from "./server.js"
-import environment from "./config.js"
+import initServer from "./server.js"
 
-httpServer.listen(environment.httpPort, () =>
-  console.info(
-    `HTTP server is running on port ${environment.httpPort} in ${environment.name} mode`
-  )
-)
+function app() {
+  initServer()
+}
 
-httpsServer.listen(environment.httpsPort, () =>
-  console.info(
-    `HTTPS server is running on port ${environment.httpsPort} in ${environment.name} mode`
-  )
-)
+app()
+
+export default app

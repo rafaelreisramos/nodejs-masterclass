@@ -18,4 +18,17 @@ const httpsServer = https.createServer(httpsServerOptions, (req, res) => {
   handler(req, res)
 })
 
-export { httpServer, httpsServer }
+function init() {
+  httpServer.listen(environment.httpPort, () =>
+    console.info(
+      `HTTP server is running on port ${environment.httpPort} in ${environment.name} mode`
+    )
+  )
+  httpsServer.listen(environment.httpsPort, () =>
+    console.info(
+      `HTTPS server is running on port ${environment.httpsPort} in ${environment.name} mode`
+    )
+  )
+}
+
+export default init
