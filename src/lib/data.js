@@ -57,9 +57,23 @@ async function fileDelete(dir, file) {
   }
 }
 
+async function fileList(dir) {
+  try {
+    const files = await fs.readdir(path.join(baseDir, dir))
+    let filenames = []
+    for (const file of files) {
+      filenames.push(file.replace(".json", ""))
+    }
+    return filenames
+  } catch (e) {
+    return e.message
+  }
+}
+
 export default {
   open: fileOpen,
   read: fileRead,
   update: fileUpdate,
   delete: fileDelete,
+  list: fileList,
 }
