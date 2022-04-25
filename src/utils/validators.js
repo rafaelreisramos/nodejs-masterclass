@@ -148,6 +148,11 @@ function timeoutInSecondsValidation(timeoutInSeconds) {
   return true
 }
 
+function checkStatesValidation(state) {
+  if (typeof state !== "string" || !["up", "down"].includes(state)) return false
+  return true
+}
+
 function checkValidation(check) {
   const { protocol, url, method, successCodes, timeoutInSeconds } = check
   return (
@@ -167,6 +172,7 @@ export default {
   tokenId: tokenIdValidation,
   tokenRefresh: tokenRefreshValidation,
   check: checkValidation,
+  checkStates: checkStatesValidation,
   userChecks: userChecksValidation,
   checkUpdate: checkUpdateValidation,
 }
