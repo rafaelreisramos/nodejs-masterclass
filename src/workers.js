@@ -1,4 +1,5 @@
 import _data from "./lib/data.js"
+import _logs from "./lib/logs.js"
 import sendTwilioSms from "./lib/sms-twilio.js"
 import helpers from "./utils/helpers.js"
 import validators from "./utils/validators.js"
@@ -19,6 +20,7 @@ workers.alertUserToStatusChanges = async function (check) {
 
 workers.processCheckOutcome = async function (check, checkOutcome) {
   console.log(checkOutcome)
+  const time = Date.now()
   const state =
     !checkOutcome.error &&
     checkOutcome.responseCode &&
@@ -29,8 +31,10 @@ workers.processCheckOutcome = async function (check, checkOutcome) {
   const newCheck = {
     ...check,
     state,
-    lastChecked: Date.now(),
+    lastChecked: time,
   }
+
+  await workers.log(check, checkOutcome, state, alert, time)
 
   try {
     const error = await _data.update("checks", check.id, newCheck)
@@ -145,15 +149,53 @@ workers.gatherAllChecks = async function () {
   }
 }
 
+workers.log = async function (check, outcome, state, alert, time) {
+  let logObj = {
+    check,
+    outcome,
+    state,
+    alert,
+    time,
+  }
+  const log = JSON.stringify(logObj)
+  const filename = check.id
+  await _logs.append(filename, log)
+}
+
 workers.loop = function () {
   setInterval(async () => {
     await workers.gatherAllChecks()
-  }, 1000 * 10) // 1 minute
+  }, 1000 * 60) // 1 minute
+}
+
+workers.rotateLogs = async function () {
+  try {
+    const files = await _logs.list(false)
+    if (files?.length === 0) {
+      throw new Error("Could not find any logs to rotate")
+    }
+    for (let file of files) {
+      const fileId = file.replace(".log", "")
+      const compressedFileId = `${fileId}-${Date.now()}`
+      await _logs.compress(fileId, compressedFileId)
+      await _logs.truncate(fileId)
+    }
+  } catch (e) {
+    console.log(e.message)
+  }
+}
+
+workers.logRotationLoop = function () {
+  setInterval(async () => {
+    await workers.rotateLogs()
+  }, 1000 * 60 * 60 * 24) // 1 day - 24 hours
 }
 
 workers.init = function () {
   workers.gatherAllChecks()
   workers.loop()
+  workers.rotateLogs()
+  workers.logRotationLoop()
 }
 
 export default workers
