@@ -45,11 +45,18 @@ const handler = (req, res) => {
     }
 
     const chosenHandler = routes[pathname] ?? routes["notFound"]
-    chosenHandler(data, (status = 200, payload = {}) => {
-      res
-        .writeHead(status, { "Content-Type": "application/json" })
-        .end(JSON.stringify(payload))
-    })
+    chosenHandler(
+      data,
+      (status = 200, payload, contentType = "application/json") => {
+        if (contentType === "application/json") {
+          payload = JSON.stringify(typeof payload === "object" ? payload : {})
+        }
+        if (contentType === "text/html") {
+          payload = typeof payload === "string" ? payload : ""
+        }
+        res.writeHead(status, { "Content-Type": `${contentType}` }).end(payload)
+      }
+    )
   })
 }
 
