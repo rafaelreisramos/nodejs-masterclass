@@ -1,6 +1,6 @@
-import _data from "../lib/data.js"
-import helpers from "../utils/helpers.js"
-import validators from "../utils/validators.js"
+import _data from "../../lib/data.js"
+import helpers from "../../utils/helpers.js"
+import validators from "../../utils/validators.js"
 
 export async function verifyToken(id, phone) {
   const data = await _data.read("tokens", id)

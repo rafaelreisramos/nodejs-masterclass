@@ -1,7 +1,7 @@
-import config from "../config.js"
-import _data from "../lib/data.js"
-import helpers from "../utils/helpers.js"
-import validators from "../utils/validators.js"
+import config from "../../config.js"
+import _data from "../../lib/data.js"
+import helpers from "../../utils/helpers.js"
+import validators from "../../utils/validators.js"
 import { verifyToken } from "./tokens.routes.js"
 
 const routes = (data, callback) => {
