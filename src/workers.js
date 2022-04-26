@@ -181,7 +181,7 @@ workers.rotateLogs = async function () {
       await _logs.truncate(fileId)
     }
   } catch (e) {
-    console.log(e.message)
+    console.error(e.message)
   }
 }
 
