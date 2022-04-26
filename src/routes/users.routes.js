@@ -19,7 +19,7 @@ handler.post = async function ({ payload }, callback) {
   }
 
   const { firstName, lastName, phone, password, tosAgreement } = payload
-  const [_, data] = await _data.read("users", phone)
+  const data = await _data.read("users", phone)
   if (data) {
     return callback(400, {
       error: "A user with that phone number already exists",
@@ -37,8 +37,9 @@ handler.post = async function ({ payload }, callback) {
     hashedPassword,
     tosAgreement,
   }
-  const error = await _data.open("users", phone, user)
-  if (error) {
+  try {
+    await _data.open("users", phone, user)
+  } catch (e) {
     return callback(500, { error: "Could not create the new user" })
   }
 
@@ -59,7 +60,7 @@ handler.get = async function ({ searchParams, headers }, callback) {
     })
   }
 
-  const [_, data] = await _data.read("users", phone)
+  const data = await _data.read("users", phone)
   if (!data) {
     return callback(404)
   }
@@ -81,7 +82,7 @@ handler.put = async function ({ payload, headers }, callback) {
     })
   }
 
-  const [_, data] = await _data.read("users", phone)
+  const data = await _data.read("users", phone)
   if (!data) {
     return callback(400, { error: "The specified user does not exist" })
   }
@@ -95,10 +96,12 @@ handler.put = async function ({ payload, headers }, callback) {
     data.hashedPassword = hashedPassword
   }
 
-  const error = await _data.update("users", phone, data)
-  if (error) {
+  try {
+    await _data.update("users", phone, data)
+  } catch (e) {
     return callback(500, { error: "Could not update the user" })
   }
+
   callback(200)
 }
 
@@ -116,22 +119,22 @@ handler.delete = async function ({ searchParams, headers }, callback) {
     })
   }
 
-  const [_, data] = await _data.read("users", phone)
+  const data = await _data.read("users", phone)
   if (!data) {
     return callback(400, { error: "Could not find the specified user" })
   }
-  const error = await _data.delete("users", phone)
-  if (error) {
+  try {
+    await _data.delete("users", phone)
+  } catch (e) {
     return callback(500, { error: "Could not delete the specified user" })
   }
 
   let { checks } = data
   if (!validators.userChecks(checks)) checks = []
   if (checks.length > 0) {
-    const errors = await Promise.all(
-      checks.map((id) => _data.delete("checks", id))
-    )
-    if (errors.reduce((total, v) => total && v, true)) {
+    try {
+      await Promise.all(checks.map((id) => _data.delete("checks", id)))
+    } catch (e) {
       return callback(500, {
         error:
           "Failed to delete checks from user. All checks may not have been deleted from the system successfully.",

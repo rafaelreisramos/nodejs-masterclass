@@ -19,7 +19,6 @@ workers.alertUserToStatusChanges = async function (check) {
 }
 
 workers.processCheckOutcome = async function (check, checkOutcome) {
-  console.log(checkOutcome)
   const time = Date.now()
   const state =
     !checkOutcome.error &&
@@ -34,15 +33,9 @@ workers.processCheckOutcome = async function (check, checkOutcome) {
     lastChecked: time,
   }
 
-  await workers.log(check, checkOutcome, state, alert, time)
-
   try {
-    const error = await _data.update("checks", check.id, newCheck)
-    if (error) {
-      throw new Error(
-        "Got an error trying to save updates to one of the checks"
-      )
-    }
+    await workers.log(check, checkOutcome, state, alert, time)
+    await _data.update("checks", check.id, newCheck)
     if (!alert) {
       console.log("Check outcome has not changed, no alert needed")
       return
@@ -83,7 +76,7 @@ workers.performCheck = async function (check) {
       outcomeSent = true
     }
   } catch (e) {
-    console.error(e.message)
+    console.error(`${e.name}: ${e.message}`)
     checkOutcome.error = {
       error: true,
       name: e.name,
@@ -91,6 +84,7 @@ workers.performCheck = async function (check) {
       stack: e.stack,
     }
     if (!outcomeSent) {
+      // console.log("--------------------------")
       await workers.processCheckOutcome(check, checkOutcome)
       outcomeSent = true
     }
@@ -132,16 +126,12 @@ workers.validateCheckData = async function (check) {
 
 workers.gatherAllChecks = async function () {
   try {
-    const files = await _data.list("checks")
-    const checks = files.filter((file) => file !== ".gitkeep")
-    if (!checks?.length) {
+    const checks = await _data.list("checks")
+    if (!checks.length) {
       throw new Error("Could not find any checks to process")
     }
     for (let check of checks) {
-      const [error, data] = await _data.read("checks", check)
-      if (error) {
-        throw new Error("Could not read one of the checks data")
-      }
+      const data = await _data.read("checks", check)
       await workers.validateCheckData(data)
     }
   } catch (e) {
@@ -150,28 +140,26 @@ workers.gatherAllChecks = async function () {
 }
 
 workers.log = async function (check, outcome, state, alert, time) {
-  let logObj = {
-    check,
-    outcome,
-    state,
-    alert,
-    time,
-  }
+  let logObj = { check, outcome, state, alert, time }
   const log = JSON.stringify(logObj)
   const filename = check.id
-  await _logs.append(filename, log)
+  try {
+    await _logs.append(filename, log)
+  } catch (e) {
+    console.error(e.message)
+  }
 }
 
 workers.loop = function () {
   setInterval(async () => {
     await workers.gatherAllChecks()
-  }, 1000 * 60) // 1 minute
+  }, 1000 * 10) // 1 minute
 }
 
 workers.rotateLogs = async function () {
   try {
     const files = await _logs.list(false)
-    if (files?.length === 0) {
+    if (!files.length) {
       throw new Error("Could not find any logs to rotate")
     }
     for (let file of files) {

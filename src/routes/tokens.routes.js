@@ -3,7 +3,7 @@ import helpers from "../utils/helpers.js"
 import validators from "../utils/validators.js"
 
 export async function verifyToken(id, phone) {
-  const [_, data] = await _data.read("tokens", id)
+  const data = await _data.read("tokens", id)
   if (!data) return false
   if (!(data.phone === phone && data.expires > Date.now())) return false
   return true
@@ -25,7 +25,7 @@ handler.post = async function ({ payload }, callback) {
   }
 
   const { phone, password } = payload
-  const [_, data] = await _data.read("users", phone)
+  const data = await _data.read("users", phone)
   if (!data) {
     return callback(400, { error: "The specified user does not exist" })
   }
@@ -45,8 +45,9 @@ handler.post = async function ({ payload }, callback) {
     id,
     expires,
   }
-  const error = await _data.open("tokens", id, token)
-  if (error) {
+  try {
+    await _data.open("tokens", id, token)
+  } catch (e) {
     return callback(500, { error: "Could not create the new token" })
   }
 
@@ -59,7 +60,7 @@ handler.get = async function ({ searchParams }, callback) {
     return callback(400, { error: "Missing required field" })
   }
 
-  const [_, data] = await _data.read("tokens", id)
+  const data = await _data.read("tokens", id)
   if (!data) {
     return callback(404)
   }
@@ -72,7 +73,7 @@ handler.put = async function ({ payload }, callback) {
   }
 
   const { id } = payload
-  const [_, data] = await _data.read("tokens", id)
+  const data = await _data.read("tokens", id)
   if (!data) {
     return callback(400, { error: "The specified token does not exist" })
   }
@@ -83,10 +84,12 @@ handler.put = async function ({ payload }, callback) {
   }
   data.expires = Date.now() * 1000 * 60 * 60 // 1 hour
 
-  const error = await _data.update("tokens", id, data)
-  if (error) {
+  try {
+    await _data.update("tokens", id, data)
+  } catch (e) {
     return callback(500, { error: "Could not refresh the token" })
   }
+
   callback(200)
 }
 
@@ -96,14 +99,16 @@ handler.delete = async function ({ searchParams }, callback) {
     return callback(400, { error: "Missing required field" })
   }
 
-  const [_, data] = await _data.read("tokens", id)
+  const data = await _data.read("tokens", id)
   if (!data) {
     return callback(400, { error: "Could not find the specified token" })
   }
-  const error = await _data.delete("tokens", id)
-  if (error) {
+  try {
+    await _data.delete("tokens", id)
+  } catch (e) {
     return callback(500, { error: "Could not delete the specified token" })
   }
+
   callback(200)
 }
 

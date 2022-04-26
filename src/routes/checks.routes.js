@@ -20,13 +20,13 @@ handler.post = async function ({ payload, headers }, callback) {
   }
 
   const id = headers.tokenid
-  const [_, token] = await _data.read("tokens", id)
+  const token = await _data.read("tokens", id)
   if (!token) {
     return callback(403)
   }
 
   const { phone } = token
-  const [__, user] = await _data.read("users", phone)
+  const user = await _data.read("users", phone)
   if (!user) {
     return callback(403)
   }
@@ -50,15 +50,18 @@ handler.post = async function ({ payload, headers }, callback) {
     successCodes,
     timeoutInSeconds,
   }
-  let error = await _data.open("checks", checkId, check)
-  if (error) {
+
+  try {
+    await _data.open("checks", checkId, check)
+  } catch (e) {
     return callback(500, { error: "Could not create the new check" })
   }
 
   user.checks = checks
   user.checks.push(checkId)
-  error = await _data.update("users", phone, user)
-  if (error) {
+  try {
+    await _data.update("users", phone, user)
+  } catch (e) {
     return callback(500, {
       error: "Could not update the user with the new checks",
     })
@@ -73,7 +76,7 @@ handler.get = async function ({ searchParams, headers }, callback) {
     return callback(400, { error: "Missing required field" })
   }
 
-  const [_, check] = await _data.read("checks", id)
+  const check = await _data.read("checks", id)
   if (!check) {
     return callback(404)
   }
@@ -94,7 +97,7 @@ handler.put = async function ({ payload, headers }, callback) {
   }
 
   const { id, protocol, url, method, successCodes, timeoutInSeconds } = payload
-  const [_, check] = await _data.read("checks", id)
+  const check = await _data.read("checks", id)
   if (!check) {
     return callback(400, { error: "Check id does not exist" })
   }
@@ -114,8 +117,9 @@ handler.put = async function ({ payload, headers }, callback) {
   if (successCodes) check.successCodes = successCodes
   if (timeoutInSeconds) check.timeoutInSeconds = timeoutInSeconds
 
-  const error = await _data.update("checks", id, check)
-  if (error) {
+  try {
+    await _data.update("checks", id, check)
+  } catch (e) {
     return callback(500, { error: "Could not update the check" })
   }
   callback(200)
@@ -127,7 +131,7 @@ handler.delete = async function ({ searchParams, headers }, callback) {
     return callback(400, { error: "Missing required field" })
   }
 
-  const [_, check] = await _data.read("checks", id)
+  const check = await _data.read("checks", id)
   if (!check) {
     return callback(404)
   }
@@ -139,12 +143,13 @@ handler.delete = async function ({ searchParams, headers }, callback) {
     return callback(403)
   }
 
-  let error = await _data.delete("checks", id)
-  if (error) {
+  try {
+    await _data.delete("checks", id)
+  } catch (e) {
     return callback(500, { error: "Could not delete the specified check" })
   }
 
-  const [__, user] = await _data.read("users", phone)
+  const user = await _data.read("users", phone)
   if (!user) {
     return callback(500, {
       error:
@@ -162,8 +167,9 @@ handler.delete = async function ({ searchParams, headers }, callback) {
   checks.splice(checkIndex, 1)
   user.checks = checks
 
-  error = await _data.update("users", phone, user)
-  if (error) {
+  try {
+    await _data.update("users", phone, user)
+  } catch (e) {
     return callback(500, { error: "Could not update the user" })
   }
 
