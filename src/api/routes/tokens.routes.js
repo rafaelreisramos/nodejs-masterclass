@@ -38,7 +38,7 @@ handler.post = async function ({ payload }, callback) {
     return callback(400, { error: "Password did not match" })
   }
 
-  const id = await helpers.createRandomString()
+  const id = helpers.createRandomString()
   const expires = Date.now() * 1000 * 60 * 60 // 1 hour
   const token = {
     phone,

@@ -39,7 +39,7 @@ handler.post = async function ({ payload, headers }, callback) {
     })
   }
 
-  const checkId = await helpers.createRandomString()
+  const checkId = helpers.createRandomString()
   const { protocol, url, method, successCodes, timeoutInSeconds } = payload
   const check = {
     id: checkId,

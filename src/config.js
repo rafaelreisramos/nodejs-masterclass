@@ -12,4 +12,10 @@ export default {
   name: currentEnv,
   hashSecret: process.env.HASH_SECRET,
   maxChecks: process.env.MAX_CHECKS,
+  templateGlobals: {
+    appName: "UptimeChecker",
+    companyName: "NotRealCompany, Inc.",
+    yearCreated: "2022",
+    baseUrl: `http://${process.env.HOST}:${process.env.HTTP_PORT}/`,
+  },
 }
