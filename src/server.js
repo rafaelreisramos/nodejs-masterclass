@@ -48,17 +48,18 @@ const handler = (req, res) => {
     chosenHandler = pathname.includes("public")
       ? routes["public"]
       : chosenHandler
-    chosenHandler(data, (status = 200, payload, contentType) => {
-      if (contentType === "application/json") {
-        payload = JSON.stringify(typeof payload === "object" ? payload : {})
+    chosenHandler(
+      data,
+      (status = 200, payload, contentType = "application/json") => {
+        if (contentType === "application/json") {
+          payload = JSON.stringify(typeof payload === "object" ? payload : {})
+        }
+        if (contentType === "text/html") {
+          payload = typeof payload === "string" ? payload : ""
+        }
+        res.writeHead(status, { "Content-Type": `${contentType}` }).end(payload)
       }
-      if (contentType === "text/html") {
-        payload = typeof payload === "string" ? payload : ""
-      }
-      res
-        .writeHead(status, { "Content-Type": `${contentType ?? 0}` })
-        .end(payload)
-    })
+    )
   })
 }
 
