@@ -15,9 +15,9 @@ handlers.index = async function (data, callback) {
   }
 
   const templateData = {
-    "head.title": "This is the title",
-    "head.description": "This is the meta description",
-    "body.title": "Hello world",
+    "head.title": "Uptime Monitoring - Made Simple",
+    "head.description":
+      "We offer free, simple uptime monitoring for HTTP/HTTPS sites of all kinds.\n When your site goes down, we'll send you a text to let you know.",
     "body.class": "index",
   }
 
