@@ -47,7 +47,7 @@ handler.post = async function ({ payload }, callback) {
 }
 
 handler.get = async function ({ searchParams, headers }, callback) {
-  const phone = searchParams.get("phone")
+  const phone = searchParams.get("phone").trim()
   if (!validators.phone(phone)) {
     return callback(400, { error: "Missing required field" })
   }
@@ -106,7 +106,7 @@ handler.put = async function ({ payload, headers }, callback) {
 }
 
 handler.delete = async function ({ searchParams, headers }, callback) {
-  const phone = searchParams.get("phone")
+  const phone = searchParams.get("phone").trim()
   if (!validators.phone(phone)) {
     return callback(400, { error: "Missing required field" })
   }
