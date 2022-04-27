@@ -58,7 +58,7 @@ async function documentTemplate(str, data) {
 function interpolate(str, data) {
   str = typeof str === "string" && str.length ? str : ""
   data = typeof data === "object" && data ? data : {}
-  let newStr
+  let newStr = ""
   for (const key in config.templateGlobals) {
     if (config.templateGlobals.hasOwnProperty(key)) {
       data[`global.${key}`] = config.templateGlobals[key]
@@ -72,10 +72,28 @@ function interpolate(str, data) {
   return str
 }
 
+async function getStaticAsset(filename) {
+  filename = typeof filename === "string" && filename.length ? filename : false
+  try {
+    if (!filename) {
+      throw new Error("A valid filename was not specified")
+    }
+    const publicDir = path.join(process.cwd(), "src", "public")
+    const file = await fs.readFile(path.join(publicDir, filename))
+    if (!file) {
+      throw new Error("No file could be found")
+    }
+    return file
+  } catch (e) {
+    console.error(e.message)
+  }
+}
+
 export default {
   hashPassword: hash,
   jsonParse,
   createRandomString,
   getPageTemplate,
   documentTemplate,
+  getStaticAsset,
 }

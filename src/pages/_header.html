@@ -9,22 +9,24 @@
     
     <title>{head.title} | {global.appName}</title>
   
-    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
-    <script type="text/javascript" charset="utf-8" src="script.js"></script>
-    <link rel="stylesheet" type="text/css" href="public/styles.css" />
+    <link rel="shortcut icon" href="./public/favicon.ico" type="image/vnd.microsoft.icon" />
+    <script type="text/javascript" charset="utf-8" src="./public/script.js"></script>
+    <link rel="stylesheet" type="text/css" href="./public/styles.css" />
   </head>
   <body class="{body.class}">
     <div class="wrapper">
       <div class="header">
-        <div class="logo" href="/"></div>
+        <div class="logo" href="/">
+          <img src="./public/logo.png"/>
+        </div>
         <ul class="menu">
           <li>
             <a href="/">Home</a>
-            <a class="loggedOut" href="/">Signup</a>
-            <a class="loggedOut" href="/">Login</a>
-            <a class="loggedIn" href="/">Dashboard</a>
-            <a class="loggedIn" href="/">Account Settings</a>
-            <a class="loggedIn" href="/">Logout</a>
+            <a class="loggedOut" href="/account/create">Signup</a>
+            <a class="loggedOut" href="/session/create">Login</a>
+            <a class="loggedIn" href="/checks/all">Dashboard</a>
+            <a class="loggedIn" href="/account/edit">Account Settings</a>
+            <a class="loggedIn" href="#">Logout</a>
           </li>
         </ul>
       </div>

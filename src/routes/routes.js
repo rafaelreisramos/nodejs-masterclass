@@ -11,7 +11,7 @@ let handlers = {}
 handlers.index = async function (data, callback) {
   const methods = ["get"]
   if (!methods.includes(data.method)) {
-    return callback(405, undefined, "text/html")
+    return callback(405)
   }
 
   const templateData = {
@@ -21,7 +21,7 @@ handlers.index = async function (data, callback) {
     "body.class": "index",
   }
 
-  let document
+  let document = ""
   try {
     const page = await helpers.getPageTemplate("index.html", templateData)
     if (!page.length) {
@@ -32,10 +32,43 @@ handlers.index = async function (data, callback) {
       throw new Error()
     }
   } catch {
-    return callback(500, undefined, "text/html")
+    return callback(500)
   }
 
   callback(200, document, "text/html")
+}
+
+const contentTypes = {
+  js: "text/javascript",
+  css: "text/css",
+  png: "image/png",
+  jpg: "image/jpeg",
+  ico: "image/vnd.microsoft.icon",
+  plain: "text/plain",
+}
+
+handlers.static = async function (data, callback) {
+  const methods = ["get"]
+  if (!methods.includes(data.method)) {
+    return callback(405)
+  }
+  let contentType = contentTypes["plain"]
+  let asset = null
+  try {
+    const assetName = data.pathname.replace("public/", "").trim()
+    if (!assetName.length) {
+      throw new Error()
+    }
+    asset = await helpers.getStaticAsset(assetName)
+    if (!asset) {
+      throw new Error()
+    }
+    contentType = contentTypes[assetName.split(".")[1]]
+  } catch {
+    return callback(404)
+  }
+
+  callback(200, asset, contentType)
 }
 
 const routes = {
@@ -54,6 +87,7 @@ const routes = {
   "api/users": apiUsersRoutes,
   "api/tokens": apiTokensRoutes,
   "api/checks": apiChecksRoutes,
+  public: handlers.static,
   notFound: (_, callback) => {
     callback(404)
   },
