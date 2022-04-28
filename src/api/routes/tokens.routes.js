@@ -51,7 +51,7 @@ handler.post = async function ({ payload }, callback) {
     return callback(500, { error: "Could not create the new token" })
   }
 
-  callback(201)
+  callback(201, token)
 }
 
 handler.get = async function ({ searchParams }, callback) {
