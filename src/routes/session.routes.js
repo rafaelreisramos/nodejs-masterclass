@@ -6,12 +6,12 @@ const routes = (data, callback) => {
   if (!methods.includes(data.method)) {
     return callback(405)
   }
-  handler[data.method](data, callback)
+  handler[data.pathname](data, callback)
 }
 
 const handler = {}
 
-handler.get = async function (data, callback) {
+handler["session/create"] = async function (data, callback) {
   const templateData = {
     "head.title": "Login to your account",
     "head.description":
@@ -23,6 +23,33 @@ handler.get = async function (data, callback) {
   try {
     const page = await helpers.getPageTemplate(
       "session-create.html",
+      templateData
+    )
+    if (!page.length) {
+      throw new Error()
+    }
+    document = await helpers.documentTemplate(page, templateData)
+    if (!document.length) {
+      throw new Error()
+    }
+  } catch {
+    return callback(500)
+  }
+
+  callback(200, document, "text/html")
+}
+
+handler["session/deleted"] = async function (data, callback) {
+  const templateData = {
+    "head.title": "LoggedOut",
+    "head.description": "You have been logged out of your account.",
+    "body.class": "sessionDelete",
+  }
+
+  let document = ""
+  try {
+    const page = await helpers.getPageTemplate(
+      "session-deleted.html",
       templateData
     )
     if (!page.length) {

@@ -80,7 +80,7 @@ const routes = {
   "account/edit": accountRoutes,
   "account/delete": accountRoutes,
   "session/create": sessionRoutes,
-  "session/delete": sessionRoutes,
+  "session/deleted": sessionRoutes,
   "checks/all": checksRoutes,
   "checks/create": checksRoutes,
   "checks/edit": checksRoutes,

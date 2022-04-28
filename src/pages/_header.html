@@ -6,11 +6,15 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="{head.description}" />
-    
+
     <title>{head.title} | {global.appName}</title>
 
     <base href="{global.baseUrl}" />
-    <link rel="shortcut icon" href="/public/favicon.ico" type="image/vnd.microsoft.icon" />
+    <link
+      rel="shortcut icon"
+      href="/public/favicon.ico"
+      type="image/vnd.microsoft.icon"
+    />
     <script type="module" charset="utf-8" src="/public/script.js"></script>
     <link rel="stylesheet" type="text/css" href="/public/styles.css" />
   </head>
@@ -18,17 +22,15 @@
     <div class="wrapper">
       <div class="header">
         <div class="logo" href="/">
-          <img src="/public/logo.png"/>
+          <img src="/public/logo.png" />
         </div>
         <ul class="menu">
-          <li>
-            <a href="/">Home</a>
-            <a class="loggedOut" href="/account/create">Signup</a>
-            <a class="loggedOut" href="/session/create">Login</a>
-            <a class="loggedIn" href="/checks/all">Dashboard</a>
-            <a class="loggedIn" href="/account/edit">Account Settings</a>
-            <a class="loggedIn" href="#">Logout</a>
-          </li>
+          <li><a href="/">Home</a></li>
+          <li><a class="loggedOut" href="/account/create">Signup</a></li>
+          <li><a class="loggedOut" href="/session/create">Login</a></li>
+          <li><a class="loggedIn" href="/checks/all">Dashboard</a></li>
+          <li><a class="loggedIn" href="/account/edit">Account Settings</a></li>
+          <li><a id="logoutButton" class="loggedIn" href="#">Logout</a></li>
         </ul>
       </div>
       <div class="content">
