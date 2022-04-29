@@ -188,6 +188,12 @@ app.formsLoadData = async function () {
   const classes = document.querySelector("body").classList
   if (classes.contains("accountEdit")) {
     await app.formsLoadAccountSettings()
+    return
+  }
+
+  if (classes.contains("checksList")) {
+    await app.loadChecksListPage()
+    return
   }
 }
 
@@ -217,6 +223,57 @@ app.formsLoadAccountSettings = async function () {
     }
   } catch (e) {
     console.log(JSON.parse(e.message))
+    app.logout()
+  }
+}
+
+app.loadChecksListPage = async function () {
+  const phone = app.config.token.phone
+  if (!phone) {
+    app.logout()
+    return Promise.reject()
+  }
+
+  const url = new URL("/api/users", "http://localhost:3000")
+  url.searchParams.set("phone", phone)
+  try {
+    const { checks } = await app.api(`${url.pathname}${url.search}`, {
+      method: "GET",
+    })
+    if (checks.length > 0) {
+      checks.forEach(async (id) => {
+        const url = new URL("/api/checks", "http://localhost:3000")
+        url.searchParams.set("id", id)
+        try {
+          const check = await app.api(`${url.pathname}${url.search}`, {
+            method: "GET",
+          })
+          var table = document.getElementById("checksListTable")
+          var tr = table.insertRow(-1)
+          tr.classList.add("checkRow")
+          var td0 = tr.insertCell(0)
+          var td1 = tr.insertCell(1)
+          var td2 = tr.insertCell(2)
+          var td3 = tr.insertCell(3)
+          var td4 = tr.insertCell(4)
+          td0.innerHTML = check.method.toUpperCase()
+          td1.innerHTML = check.protocol + "://"
+          td2.innerHTML = check.url
+          var state = typeof check.state == "string" ? check.state : "unknown"
+          td3.innerHTML = state
+          td4.innerHTML = `<a href="/checks/edit?id=${check.id}">View / Edit / Delete</a>`
+        } catch {
+          console.error("Error trying to load check ID: ", id)
+        }
+      })
+      if (checks.length < 5) {
+        document.getElementById("createCheckCTA").style.display = "block"
+      }
+    } else {
+      document.getElementById("noChecksMessage").style.display = "table-row"
+      document.getElementById("createCheckCTA").style.display = "block"
+    }
+  } catch {
     app.logout()
   }
 }
