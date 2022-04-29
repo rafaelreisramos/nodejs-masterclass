@@ -60,4 +60,27 @@ handler["checks/all"] = async function (data, callback) {
   callback(200, document, "text/html")
 }
 
+handler["checks/edit"] = async function (data, callback) {
+  const templateData = {
+    "head.title": "Check Details",
+    "body.class": "checksEdit",
+  }
+
+  let document = ""
+  try {
+    const page = await helpers.getPageTemplate("checks-edit.html", templateData)
+    if (!page.length) {
+      throw new Error()
+    }
+    document = await helpers.documentTemplate(page, templateData)
+    if (!document.length) {
+      throw new Error()
+    }
+  } catch {
+    return callback(500)
+  }
+
+  callback(200, document, "text/html")
+}
+
 export default routes

@@ -1,7 +1,7 @@
 const app = {}
 
 app.config = {
-  token: null,
+  token: false,
 }
 
 app.api = async function (endpoint, { body, ...customOptions } = {}) {
@@ -73,7 +73,6 @@ app.formsBind = function () {
         const formId = this.id
         const url = new URL(this.action)
         let method = this.method.toUpperCase()
-        console.log(formId, method)
 
         document.querySelector(`#${formId} .formError`).style.display = "none"
         if (document.querySelector(`#${formId} .formSuccess`)) {
@@ -106,6 +105,9 @@ app.formsBind = function () {
             if (nameOfElement === "httpmethod") {
               nameOfElement = "method"
             }
+            if (nameOfElement == "uid") {
+              nameOfElement = "id"
+            }
 
             if (classOfElement.indexOf("multiselect") > -1) {
               if (elementIsChecked) {
@@ -126,7 +128,6 @@ app.formsBind = function () {
           url.searchParams.set("phone", body.phone)
         }
 
-        console.log(body)
         try {
           const data = await app.api(`${url.pathname}${url.search}`, {
             body,
@@ -186,13 +187,20 @@ app.formsResponse = async function (formId, requestBody, responseData) {
 
 app.formsLoadData = async function () {
   const classes = document.querySelector("body").classList
-  if (classes.contains("accountEdit")) {
+  const primaryClass = typeof classes[0] == "string" ? classes[0] : false
+
+  if (primaryClass == "accountEdit") {
     await app.formsLoadAccountSettings()
     return
   }
 
-  if (classes.contains("checksList")) {
+  if (primaryClass == "checksList") {
     await app.loadChecksListPage()
+    return
+  }
+
+  if (primaryClass == "checksEdit") {
+    await app.loadChecksEditPage()
     return
   }
 }
@@ -218,7 +226,7 @@ app.formsLoadAccountSettings = async function () {
     const hiddenPhoneInputs = document.querySelectorAll(
       "input.hiddenPhoneNumberInput"
     )
-    for (var i = 0; i < hiddenPhoneInputs.length; i++) {
+    for (let i = 0; i < hiddenPhoneInputs.length; i++) {
       hiddenPhoneInputs[i].value = user.phone
     }
   } catch (e) {
@@ -240,7 +248,7 @@ app.loadChecksListPage = async function () {
     const { checks } = await app.api(`${url.pathname}${url.search}`, {
       method: "GET",
     })
-    if (checks.length > 0) {
+    if (checks?.length) {
       checks.forEach(async (id) => {
         const url = new URL("/api/checks", "http://localhost:3000")
         url.searchParams.set("id", id)
@@ -248,18 +256,18 @@ app.loadChecksListPage = async function () {
           const check = await app.api(`${url.pathname}${url.search}`, {
             method: "GET",
           })
-          var table = document.getElementById("checksListTable")
-          var tr = table.insertRow(-1)
+          const table = document.getElementById("checksListTable")
+          const tr = table.insertRow(-1)
           tr.classList.add("checkRow")
-          var td0 = tr.insertCell(0)
-          var td1 = tr.insertCell(1)
-          var td2 = tr.insertCell(2)
-          var td3 = tr.insertCell(3)
-          var td4 = tr.insertCell(4)
+          const td0 = tr.insertCell(0)
+          const td1 = tr.insertCell(1)
+          const td2 = tr.insertCell(2)
+          const td3 = tr.insertCell(3)
+          const td4 = tr.insertCell(4)
           td0.innerHTML = check.method.toUpperCase()
           td1.innerHTML = check.protocol + "://"
           td2.innerHTML = check.url
-          var state = typeof check.state == "string" ? check.state : "unknown"
+          const state = typeof check.state == "string" ? check.state : "unknown"
           td3.innerHTML = state
           td4.innerHTML = `<a href="/checks/edit?id=${check.id}">View / Edit / Delete</a>`
         } catch {
@@ -278,11 +286,59 @@ app.loadChecksListPage = async function () {
   }
 }
 
+app.loadChecksEditPage = async function () {
+  const id =
+    typeof window.location.href.split("=")[1] === "string" &&
+    window.location.href.split("=")[1].length > 0
+      ? window.location.href.split("=")[1]
+      : false
+
+  if (!id) {
+    window.location.assign("/checks/all")
+    return Promise.reject()
+  }
+
+  const url = new URL("/api/checks", "http://localhost:3000")
+  url.searchParams.set("id", id)
+  try {
+    const check = await app.api(`${url.pathname}${url.search}`, {
+      method: "GET",
+    })
+    let hiddenIdInputs = document.querySelectorAll("input.hiddenIdInput")
+    for (let i = 0; i < hiddenIdInputs.length; i++) {
+      hiddenIdInputs[i].value = check.id
+    }
+
+    document.querySelector("#checksEdit1 .displayIdInput").value = check.id
+    document.querySelector("#checksEdit1 .displayStateInput").value =
+      check.state
+    document.querySelector("#checksEdit1 .protocolInput").value = check.protocol
+    document.querySelector("#checksEdit1 .urlInput").value = check.url
+    document.querySelector("#checksEdit1 .methodInput").value = check.method
+    document.querySelector("#checksEdit1 .timeoutInput").value =
+      check.timeoutInSeconds
+    let successCodeCheckboxes = document.querySelectorAll(
+      "#checksEdit1 input.successCodesInput"
+    )
+    for (let i = 0; i < successCodeCheckboxes.length; i++) {
+      if (
+        check.successCodes.indexOf(parseInt(successCodeCheckboxes[i].value)) >
+        -1
+      ) {
+        successCodeCheckboxes[i].checked = true
+      }
+    }
+  } catch {
+    window.location.assign("/checks/all")
+  }
+}
+
 app.setSessionToken = function (token) {
   app.config.token = token
   if (token) {
     localStorage.setItem("token", JSON.stringify(token))
     app.addLoggedInClass(true)
+    console.log(`set body class to loggedIn`)
     return
   }
   localStorage.removeItem("token")
