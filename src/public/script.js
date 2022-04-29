@@ -46,7 +46,7 @@ app.buttonsBind = function () {
     })
 }
 
-app.logout = async function () {
+app.logout = async function (redirect = true) {
   const tokenId = app.config.token.id
   const url = new URL("/api/tokens", "http://localhost:3000")
   url.searchParams.set("id", tokenId)
@@ -55,7 +55,9 @@ app.logout = async function () {
       method: "DELETE",
     })
     app.setSessionToken(false)
-    window.location.assign("/session/deleted")
+    if (redirect) {
+      window.location.assign("/session/deleted")
+    }
   } catch (e) {
     console.log(`${e.name}: ${e.message}`)
   }
@@ -95,8 +97,15 @@ app.formsBind = function () {
           }
         }
 
+        if (method === "DELETE") {
+          url.searchParams.set("phone", body.phone)
+        }
+
         try {
-          const data = await app.api(url.pathname, { body, method })
+          const data = await app.api(`${url.pathname}${url.search}`, {
+            body,
+            method,
+          })
           app.formsResponse(formId, body, data)
         } catch (error) {
           console.log(error)
@@ -132,6 +141,11 @@ app.formsResponse = async function (formId, requestBody, responseData) {
   if (formId === "sessionCreate") {
     app.setSessionToken(responseData)
     window.location.assign("/checks/all")
+  }
+
+  if (formId === "accountEdit3") {
+    app.logout(false)
+    window.location.assign("/account/deleted")
   }
 
   const formsWithSuccessMessages = ["accountEdit1", "accountEdit2"]

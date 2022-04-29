@@ -78,7 +78,7 @@ const routes = {
   "": handlers.index,
   "account/create": accountRoutes,
   "account/edit": accountRoutes,
-  "account/delete": accountRoutes,
+  "account/deleted": accountRoutes,
   "session/create": sessionRoutes,
   "session/deleted": sessionRoutes,
   "checks/all": checksRoutes,
