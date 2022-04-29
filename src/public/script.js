@@ -85,15 +85,40 @@ app.formsBind = function () {
         const elements = this.elements
         for (let i = 0; i < elements.length; i++) {
           if (elements[i].type !== "submit") {
+            const classOfElement =
+              typeof elements[i].classList.value == "string" &&
+              elements[i].classList.value.length > 0
+                ? elements[i].classList.value
+                : ""
             const valueOfElement =
-              elements[i].type === "checkbox"
+              elements[i].type === "checkbox" &&
+              classOfElement.indexOf("multiselect") === -1
                 ? elements[i].checked
-                : elements[i].value
-            if (elements[i].name === "_method") {
+                : classOfElement.indexOf("intval") === -1
+                ? elements[i].value
+                : parseInt(elements[i].value)
+            const elementIsChecked = elements[i].checked
+            let nameOfElement = elements[i].name
+            if (nameOfElement === "_method") {
               method = valueOfElement
               continue
             }
-            body[elements[i].name] = valueOfElement
+            if (nameOfElement === "httpmethod") {
+              nameOfElement = "method"
+            }
+
+            if (classOfElement.indexOf("multiselect") > -1) {
+              if (elementIsChecked) {
+                body[nameOfElement] =
+                  typeof body[nameOfElement] == "object" &&
+                  body[nameOfElement] instanceof Array
+                    ? body[nameOfElement]
+                    : []
+                body[nameOfElement].push(valueOfElement)
+              }
+            } else {
+              body[nameOfElement] = valueOfElement
+            }
           }
         }
 
@@ -101,6 +126,7 @@ app.formsBind = function () {
           url.searchParams.set("phone", body.phone)
         }
 
+        console.log(body)
         try {
           const data = await app.api(`${url.pathname}${url.search}`, {
             body,
@@ -146,6 +172,10 @@ app.formsResponse = async function (formId, requestBody, responseData) {
   if (formId === "accountEdit3") {
     app.logout(false)
     window.location.assign("/account/deleted")
+  }
+
+  if (formId === "checksCreate") {
+    window.location.assign("/checks/all")
   }
 
   const formsWithSuccessMessages = ["accountEdit1", "accountEdit2"]
