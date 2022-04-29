@@ -28,7 +28,6 @@ const handler = (req, res) => {
   const headers = req.headers
   const searchParams = url.searchParams
   const decoder = new StringDecoder("utf-8")
-
   let buffer = ""
   req.on("data", (data) => {
     buffer += decoder.write(data)

@@ -6,27 +6,32 @@ app.config = {
 
 app.api = async function (endpoint, { body, ...customOptions } = {}) {
   const token = app.config.token
-  const headers = { "Content-Type": "application/json" }
+  const headers = new Headers({
+    "Content-Type": "application/json",
+    ...customOptions.headers,
+  })
+
   const options = {
-    method: body ? "POST" : "GET",
     ...customOptions,
-    headers: {
-      ...headers,
-      ...customOptions.headers,
-    },
+    headers,
   }
   if (token) {
-    headers.token = { tokenid: token.id }
+    headers.append("tokenid", token.id)
   }
   if (body) {
     options.body = JSON.stringify(body)
   }
-
   const url = new URL(`http://localhost:3000${endpoint}`)
   return window.fetch(url, options).then(async (response) => {
     if (!response.ok) {
-      const errorMessage = await response.text()
-      return Promise.reject(new Error(errorMessage))
+      const message = JSON.parse(await response.text()).error
+      const error = {
+        status: response.status,
+        message,
+      }
+      console.log(error)
+      console.log(JSON.stringify(error))
+      return Promise.reject(new Error(JSON.stringify(error)))
     }
     return await response.json()
   })
@@ -57,37 +62,52 @@ app.logout = async function () {
 }
 
 app.formsBind = function () {
-  document
-    .querySelector("form")
-    ?.addEventListener("submit", async function (e) {
-      e.preventDefault()
-      const formId = this.id
-      const url = new URL(this.action)
+  if (document.querySelector("form")) {
+    const forms = document.querySelectorAll("form")
 
-      document.querySelector(`#${formId} .formError`).style.display = "hidden"
+    for (let i = 0; i < forms.length; i++) {
+      forms[i].addEventListener("submit", async function (e) {
+        e.preventDefault()
+        const formId = this.id
+        const url = new URL(this.action)
+        let method = this.method.toUpperCase()
+        console.log(formId, method)
 
-      let body = {}
-      const elements = this.elements
-      for (let i = 0; i < elements.length; i++) {
-        if (elements[i].type !== "submit") {
-          const valueOfElement =
-            elements[i].type === "checkbox"
-              ? elements[i].checked
-              : elements[i].value
-          body[elements[i].name] = valueOfElement
+        document.querySelector(`#${formId} .formError`).style.display = "none"
+        if (document.querySelector(`#${formId} .formSuccess`)) {
+          document.querySelector(`#${formId} .formSuccess`).style.display =
+            "none"
         }
-      }
 
-      try {
-        const data = await app.api(url.pathname, { body })
-        app.formsResponse(formId, body, data)
-      } catch (error) {
-        console.log(error)
-        document.querySelector(`#${formId} .formError`).innerHTML =
-          error.message
-        document.querySelector(`#${formId} .formError`).style.display = "block"
-      }
-    })
+        let body = {}
+        const elements = this.elements
+        for (let i = 0; i < elements.length; i++) {
+          if (elements[i].type !== "submit") {
+            const valueOfElement =
+              elements[i].type === "checkbox"
+                ? elements[i].checked
+                : elements[i].value
+            if (elements[i].name === "_method") {
+              method = valueOfElement
+              continue
+            }
+            body[elements[i].name] = valueOfElement
+          }
+        }
+
+        try {
+          const data = await app.api(url.pathname, { body, method })
+          app.formsResponse(formId, body, data)
+        } catch (error) {
+          console.log(error)
+          document.querySelector(`#${formId} .formError`).innerHTML =
+            error.message
+          document.querySelector(`#${formId} .formError`).style.display =
+            "block"
+        }
+      })
+    }
+  }
 }
 
 app.formsResponse = async function (formId, requestBody, responseData) {
@@ -98,7 +118,7 @@ app.formsResponse = async function (formId, requestBody, responseData) {
     }
 
     try {
-      const token = await app.api("/api/tokens", { body })
+      const token = await app.api("/api/tokens", { body, method: "POST" })
       app.setSessionToken(token)
       window.location.assign("/checks/all")
     } catch (error) {
@@ -112,6 +132,48 @@ app.formsResponse = async function (formId, requestBody, responseData) {
   if (formId === "sessionCreate") {
     app.setSessionToken(responseData)
     window.location.assign("/checks/all")
+  }
+
+  const formsWithSuccessMessages = ["accountEdit1", "accountEdit2"]
+  if (formsWithSuccessMessages.indexOf(formId) > -1) {
+    document.querySelector(`#${formId} .formSuccess`).style.display = "block"
+  }
+}
+
+app.formsLoadData = async function () {
+  const classes = document.querySelector("body").classList
+  if (classes.contains("accountEdit")) {
+    await app.formsLoadAccountSettings()
+  }
+}
+
+app.formsLoadAccountSettings = async function () {
+  const phone = app.config.token.phone
+  if (!phone) {
+    app.logout()
+    return Promise.reject()
+  }
+
+  const url = new URL("/api/users", "http://localhost:3000")
+  url.searchParams.set("phone", phone)
+  try {
+    const user = await app.api(`${url.pathname}${url.search}`, {
+      method: "GET",
+    })
+    document.querySelector("#accountEdit1 .firstNameInput").value =
+      user.firstName
+    document.querySelector("#accountEdit1 .lastNameInput").value = user.lastName
+    document.querySelector("#accountEdit1 .displayPhoneInput").value =
+      user.phone
+    const hiddenPhoneInputs = document.querySelectorAll(
+      "input.hiddenPhoneNumberInput"
+    )
+    for (var i = 0; i < hiddenPhoneInputs.length; i++) {
+      hiddenPhoneInputs[i].value = user.phone
+    }
+  } catch (e) {
+    console.log(JSON.parse(e.message))
+    app.logout()
   }
 }
 
@@ -152,6 +214,7 @@ app.init = function () {
   app.formsBind()
   app.buttonsBind()
   app.getSessionToken()
+  app.formsLoadData()
 }
 
 window.onload = function () {
