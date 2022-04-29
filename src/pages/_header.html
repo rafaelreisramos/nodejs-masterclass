@@ -21,16 +21,15 @@
   <body class="{body.class}">
     <div class="wrapper">
       <div class="header">
-        <div class="logo" href="/">
-          <img src="/public/logo.png" />
-        </div>
+        <a class="logo" href="/">
+          <img src="public/logo.png" alt="Logo" />
+        </a>
         <ul class="menu">
           <li><a href="/">Home</a></li>
-          <li><a class="loggedOut" href="/account/create">Signup</a></li>
-          <li><a class="loggedOut" href="/session/create">Login</a></li>
-          <li><a class="loggedIn" href="/checks/all">Dashboard</a></li>
-          <li><a class="loggedIn" href="/account/edit">Account Settings</a></li>
-          <li><a id="logoutButton" class="loggedIn" href="#">Logout</a></li>
+          <li class="loggedOut"><a href="/account/create">Signup</a></li>
+          <li class="loggedOut"><a href="/session/create">Login</a></li>
+          <li class="loggedIn"><a href="/checks/all">Dashboard</a></li>
+          <li class="loggedIn"><a href="/account/edit">Account Settings</a></li>
+          <li class="loggedIn"><a href="#" id="logoutButton">Logout</a></li>
         </ul>
-      </div>
-      <div class="content">
+        <div class="content"></div>
