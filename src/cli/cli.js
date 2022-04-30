@@ -37,8 +37,8 @@ emitter
   .on("more log info", (str) => {
     cli.responders.logInfo(str)
   })
-  .on("more user info", (str) => {
-    cli.responders.userInfo(str)
+  .on("more user info", async (str) => {
+    await cli.responders.userInfo(str)
   })
   .on("stats", () => {
     cli.responders.stats()
@@ -99,7 +99,7 @@ cli.responders.listUsers = async function () {
   try {
     const usersIds = await _data.list("users")
     if (!usersIds) {
-      return Promise.reject()
+      throw new Error()
     }
     cli.verticalSpace()
     const promises = usersIds.map((id) => _data.read("users", id))
@@ -121,8 +121,22 @@ cli.responders.logInfo = function (str) {
   console.log("You asked for more log info", str)
 }
 
-cli.responders.userInfo = function (str) {
-  console.log("You asked for more user info", str)
+cli.responders.userInfo = async function (str) {
+  let userId = str.split("--")[1]
+  userId = typeof userId === "string" && userId.length > 0 ? userId.trim() : ""
+  try {
+    if (!userId) {
+      throw new Error()
+    }
+    const user = await _data.read("users", userId)
+    if (!user) {
+      throw new Error()
+    }
+    delete user.hashedPassword
+    cli.verticalSpace()
+    console.dir(user, { colors: true })
+    cli.verticalSpace()
+  } catch {}
 }
 
 cli.responders.stats = function () {
@@ -173,7 +187,7 @@ cli.responders.stats = function () {
     cli.verticalSpace()
   }
 
-  cli.verticalSpace(1)
+  cli.verticalSpace()
   cli.horizontalLine()
 }
 
