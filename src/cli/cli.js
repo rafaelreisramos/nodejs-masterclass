@@ -8,6 +8,76 @@ const emitter = new Emitter()
 
 const cli = {}
 
+emitter
+  .on("exit", () => {
+    cli.responders.exit()
+  })
+  .on("help", () => {
+    cli.responders.help()
+  })
+  .on("list checks", () => {
+    cli.responders.listChecks()
+  })
+  .on("list logs", () => {
+    cli.responders.listLogs()
+  })
+  .on("list users", () => {
+    cli.responders.listUsers()
+  })
+  .on("man", () => {
+    cli.responders.help()
+  })
+  .on("more check info", (str) => {
+    cli.responders.checkInfo(str)
+  })
+  .on("more log info", (str) => {
+    cli.responders.logInfo(str)
+  })
+  .on("more user info", (str) => {
+    cli.responders.userInfo(str)
+  })
+  .on("stats", () => {
+    cli.responders.stats()
+  })
+
+cli.responders = {}
+
+cli.responders.help = function () {
+  console.log("You asked for help")
+}
+
+cli.responders.exit = function () {
+  console.log("You asked for exit")
+}
+
+cli.responders.listChecks = function () {
+  console.log("You asked to list checks")
+}
+
+cli.responders.listLogs = function () {
+  console.log("You asked to list logs")
+}
+
+cli.responders.listUsers = function () {
+  console.log("You asked to list users")
+}
+
+cli.responders.checkInfo = function (str) {
+  console.log("You asked for more check info", str)
+}
+
+cli.responders.logInfo = function (str) {
+  console.log("You asked for more log info", str)
+}
+
+cli.responders.userInfo = function (str) {
+  console.log("You asked for more user info", str)
+}
+
+cli.responders.stats = function () {
+  console.log("You asked for stats")
+}
+
 cli.input = function (str) {
   str = typeof str === "string" && str.trim().length > 0 ? str.trim() : false
   if (!str) return
