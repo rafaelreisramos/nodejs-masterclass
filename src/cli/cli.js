@@ -4,6 +4,7 @@ import EventEmitter from "node:events"
 import os from "node:os"
 import v8 from "node:v8"
 import helpers from "../utils/helpers.js"
+import _data from "../lib/data.js"
 
 const debug = util.debuglog("cli")
 class Emitter extends EventEmitter {}
@@ -24,8 +25,8 @@ emitter
   .on("list logs", () => {
     cli.responders.listLogs()
   })
-  .on("list users", () => {
-    cli.responders.listUsers()
+  .on("list users", async () => {
+    await cli.responders.listUsers()
   })
   .on("man", () => {
     cli.responders.help()
@@ -94,8 +95,22 @@ cli.responders.listLogs = function () {
   console.log("You asked to list logs")
 }
 
-cli.responders.listUsers = function () {
-  console.log("You asked to list users")
+cli.responders.listUsers = async function () {
+  try {
+    const usersIds = await _data.list("users")
+    if (!usersIds) {
+      return Promise.reject()
+    }
+    cli.verticalSpace()
+    const promises = usersIds.map((id) => _data.read("users", id))
+    const promisesResults = await Promise.allSettled(promises)
+    const lines = promisesResults.map(({ status, value: user }) => {
+      if (status === "fulfilled")
+        return `Name: ${user.firstName} ${user.lastName}, Phone: ${user.phone}`
+    })
+    lines.forEach((line) => console.log(line))
+    cli.verticalSpace()
+  } catch {}
 }
 
 cli.responders.checkInfo = function (str) {
