@@ -153,7 +153,7 @@ workers.log = async function (check, outcome, state, alert, time) {
 workers.loop = function () {
   setInterval(async () => {
     await workers.gatherAllChecks()
-  }, 1000 * 10) // 1 minute
+  }, 1000 * 60) // 1 minute
 }
 
 workers.rotateLogs = async function () {
