@@ -43,7 +43,40 @@ emitter
 cli.responders = {}
 
 cli.responders.help = function () {
-  console.log("You asked for help")
+  const commands = {
+    exit: "Kill the CLI (and the rest of application)",
+    man: "Show this help page",
+    help: "Alias of 'man' command",
+    stats:
+      "Get statistics of the underlying operating system and resources utilization",
+    "list users":
+      "Show a list of all the registered (undeleted) users in the system",
+    "more user info --{userId}": "Show details of a specific user",
+    "list checks --up --down":
+      "Show a list of all the active checks in the system, including their state. The '--up' and '--down' flags are both optional.",
+    "more check info --{checkId}": "Show details of a specific check",
+    "list logs":
+      "Show a list of all the log files available to be read (compressed and uncompressed)",
+    "more log info --{filename}": "Show details of a specified log file",
+  }
+
+  cli.horizontalLine()
+  cli.centered("CLI MANUAL")
+  cli.horizontalLine()
+  cli.verticalSpace(2)
+
+  for (const command in commands) {
+    if (!commands.hasOwnProperty(command)) continue
+    const description = commands[command]
+    let line = `\x1b[33m${command}\x1b[0m`
+    let padding = 60 - line.length
+    line = `${line}${" ".repeat(padding)}${description}`
+    console.log(line)
+    cli.verticalSpace()
+  }
+
+  cli.verticalSpace(1)
+  cli.horizontalLine()
 }
 
 cli.responders.exit = function () {
@@ -76,6 +109,25 @@ cli.responders.userInfo = function (str) {
 
 cli.responders.stats = function () {
   console.log("You asked for stats")
+}
+
+cli.verticalSpace = function (lines) {
+  lines = typeof lines === "number" && lines > 0 ? lines : 1
+  console.log(`${" ".repeat(lines)}`)
+}
+
+cli.horizontalLine = function () {
+  const width = process.stdout.columns
+  const line = `${"-".repeat(width)}`
+  console.log(line)
+}
+
+cli.centered = function (str) {
+  str = typeof str === "string" && str.length > 0 ? str.trim() : ""
+  const width = process.stdout.columns
+  const leftPadding = Math.floor((width - str.length) / 2)
+  const line = `${" ".repeat(leftPadding)}${str}`
+  console.log(line)
 }
 
 cli.input = function (str) {
