@@ -89,6 +89,14 @@ async function getStaticAsset(filename) {
   }
 }
 
+function hoursMinutesSeconds(totalSeconds) {
+  const hourMinutsSeconds = new Date(totalSeconds * 1000)
+    .toISOString()
+    .substring(11, 19)
+  const [hours, minutes, seconds] = hourMinutsSeconds.split(":")
+  return `${hours} hours, ${minutes} minutes and ${seconds} seconds`
+}
+
 export default {
   hashPassword: hash,
   jsonParse,
@@ -96,4 +104,5 @@ export default {
   getPageTemplate,
   documentTemplate,
   getStaticAsset,
+  hoursMinutesSeconds,
 }

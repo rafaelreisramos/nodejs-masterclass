@@ -1,6 +1,9 @@
 import readline from "node:readline"
 import util from "node:util"
 import EventEmitter from "node:events"
+import os from "node:os"
+import v8 from "node:v8"
+import helpers from "../utils/helpers.js"
 
 const debug = util.debuglog("cli")
 class Emitter extends EventEmitter {}
@@ -108,7 +111,55 @@ cli.responders.userInfo = function (str) {
 }
 
 cli.responders.stats = function () {
-  console.log("You asked for stats")
+  const uptimeInSeconds = os.uptime()
+  const loadAverage = os.loadavg().join()
+  const cpuCount = os.cpus().length
+  const freeMemoryInMegabytes = Math.floor(os.totalmem() / (1024 * 1024))
+  const currentMallocedMemoryInKilobytes = Math.floor(
+    v8.getHeapStatistics().malloced_memory / 1024
+  )
+  const peekMallocedMemoryInKilobytes = Math.floor(
+    v8.getHeapStatistics().peak_malloced_memory / 1024
+  )
+  const allocatedHeapInPercentage = Math.floor(
+    (v8.getHeapStatistics().used_heap_size /
+      v8.getHeapStatistics().total_heap_size) *
+      100
+  )
+  const availableHeapAllocated = Math.floor(
+    (v8.getHeapStatistics().total_heap_size /
+      v8.getHeapStatistics().heap_size_limit) *
+      100
+  )
+
+  const stats = {
+    "Load Average": loadAverage,
+    "CPU Count": cpuCount,
+    "Free Memory": `${freeMemoryInMegabytes} MB`,
+    "Current Malloced Memory": `${currentMallocedMemoryInKilobytes} kB`,
+    "Peek Malloced Memory": `${peekMallocedMemoryInKilobytes} kB`,
+    "Allocated Heap Used (%)": allocatedHeapInPercentage,
+    "Available Heap Allocated (%)": availableHeapAllocated,
+    Uptime: helpers.hoursMinutesSeconds(uptimeInSeconds),
+  }
+
+  cli.horizontalLine()
+  cli.centered("SYSTEM STATISTICS")
+  cli.horizontalLine()
+  cli.verticalSpace(2)
+
+  for (const stat in stats) {
+    if (!stats.hasOwnProperty(stat)) continue
+    const description = stats[stat]
+    let line = `\x1b[33m${stat}\x1b[0m`
+    let padding = 60 - line.length
+    line = `${line}${" ".repeat(padding)}${description}`
+    console.log(line)
+    cli.verticalSpace()
+  }
+
+  cli.verticalSpace(1)
+  cli.horizontalLine()
 }
 
 cli.verticalSpace = function (lines) {
