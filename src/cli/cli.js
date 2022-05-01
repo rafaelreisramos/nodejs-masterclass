@@ -35,8 +35,8 @@ emitter
   .on("more check info", async (str) => {
     await cli.responders.checkInfo(str)
   })
-  .on("more log info", (str) => {
-    cli.responders.logInfo(str)
+  .on("more log info", async (str) => {
+    await cli.responders.logInfo(str)
   })
   .on("more user info", async (str) => {
     await cli.responders.userInfo(str)
@@ -182,8 +182,28 @@ cli.responders.checkInfo = async function (str) {
   } catch {}
 }
 
-cli.responders.logInfo = function (str) {
-  console.log("You asked for more log info", str)
+cli.responders.logInfo = async function (str) {
+  let filename = str.split("--")[1]
+  filename =
+    typeof filename === "string" && filename.length > 0 ? filename.trim() : ""
+  try {
+    if (!filename) {
+      throw new Error()
+    }
+    const content = await _logs.decompress(filename)
+    if (!content) {
+      throw new Error()
+    }
+    const checks = []
+    content.split("\n").forEach((line) => {
+      const check = helpers.jsonParse(line)
+      if (check && JSON.stringify(check) !== "{}") checks.push(check)
+    })
+
+    cli.verticalSpace()
+    checks.forEach((check) => console.dir(check, { colors: true }))
+    cli.verticalSpace()
+  } catch {}
 }
 
 cli.responders.userInfo = async function (str) {
