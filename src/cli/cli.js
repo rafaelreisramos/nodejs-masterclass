@@ -31,8 +31,8 @@ emitter
   .on("man", () => {
     cli.responders.help()
   })
-  .on("more check info", (str) => {
-    cli.responders.checkInfo(str)
+  .on("more check info", async (str) => {
+    await cli.responders.checkInfo(str)
   })
   .on("more log info", (str) => {
     cli.responders.logInfo(str)
@@ -150,8 +150,22 @@ cli.responders.listUsers = async function () {
   } catch {}
 }
 
-cli.responders.checkInfo = function (str) {
-  console.log("You asked for more check info", str)
+cli.responders.checkInfo = async function (str) {
+  let checkId = str.split("--")[1]
+  checkId =
+    typeof checkId === "string" && checkId.length > 0 ? checkId.trim() : ""
+  try {
+    if (!checkId) {
+      throw new Error()
+    }
+    const check = await _data.read("checks", checkId)
+    if (!check) {
+      throw new Error()
+    }
+    cli.verticalSpace()
+    console.dir(check, { colors: true })
+    cli.verticalSpace()
+  } catch {}
 }
 
 cli.responders.logInfo = function (str) {
