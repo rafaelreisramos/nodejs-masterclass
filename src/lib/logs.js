@@ -26,7 +26,7 @@ async function fileList(includeCompressedFiles) {
       if (file.includes(".log")) {
         filenames.push(file.replace(".log", ""))
       }
-      if (file.includes(".gz.b64") && includeCompressedFiles) {
+      if (file.includes(".bz.b64") && includeCompressedFiles) {
         filenames.push(file.replace(".bz.b64", ""))
       }
     }
