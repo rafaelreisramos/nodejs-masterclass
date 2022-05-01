@@ -71,6 +71,10 @@ handlers.static = async function (data, callback) {
   callback(200, asset, contentType)
 }
 
+function errorRoute(_, callback) {
+  throw new Error("Example error route")
+}
+
 const routes = {
   alive: (_, callback) => {
     callback(200, { route: "alive" })
@@ -87,6 +91,7 @@ const routes = {
   "api/users": apiUsersRoutes,
   "api/tokens": apiTokensRoutes,
   "api/checks": apiChecksRoutes,
+  "example/error": errorRoute,
   public: handlers.static,
   notFound: (_, callback) => {
     callback(404)
