@@ -60,11 +60,11 @@ async function compressFile(srcId, dstId) {
 }
 
 async function decompressFile(fileId) {
-  const filename = `${fileId}.gz.b64`
+  const filename = `${fileId}.bz.b64`
   const promiseUnzip = promisify(zlib.unzip)
 
   try {
-    const fileContent = fs.readFile(path.join(baseDir, filename), "utf-8")
+    const fileContent = await fs.readFile(path.join(baseDir, filename), "utf-8")
     const inputBuffer = Buffer.from(fileContent, "base64")
     const outputBuffer = await promiseUnzip(inputBuffer)
     return outputBuffer.toString()
