@@ -19,8 +19,8 @@ emitter
   .on("help", () => {
     cli.responders.help()
   })
-  .on("list checks", () => {
-    cli.responders.listChecks()
+  .on("list checks", async (str) => {
+    await cli.responders.listChecks(str)
   })
   .on("list logs", () => {
     cli.responders.listLogs()
@@ -87,8 +87,45 @@ cli.responders.exit = function () {
   process.exit(0)
 }
 
-cli.responders.listChecks = function () {
-  console.log("You asked to list checks")
+cli.responders.listChecks = async function (str) {
+  const command = str.toLowerCase()
+  try {
+    const checksIds = await _data.list("checks")
+    if (!checksIds) {
+      throw new Error()
+    }
+    const promises = checksIds.map((id) => _data.read("checks", id))
+    const promisesResults = await Promise.allSettled(promises)
+    const allChecks = promisesResults.map(({ status, value: check }) => {
+      if (status === "fulfilled") return check
+    })
+
+    let checks = []
+    checks = allChecks.map((check) => {
+      if (!check.state || typeof check.state !== "string")
+        check.state = "unknown"
+      return check
+    })
+    let checksDown = []
+    if (!command.includes("--up") || command.includes("--down")) {
+      checksDown = checks.filter((check) => check.state !== "up")
+    }
+    let checksUp = []
+    if (!command.includes("--down") || command.includes("--up")) {
+      checksUp = checks.filter((check) => check.state !== "down")
+    }
+
+    cli.verticalSpace()
+    const filteredChecks = [...checksUp, ...checksDown]
+    const lines = filteredChecks.map(
+      (check) =>
+        `ID: ${check.id} ${check.method.toUpperCase()} ${check.protocol}://${
+          check.url
+        }, status: ${check.state} `
+    )
+    lines.forEach((line) => console.log(line))
+    cli.verticalSpace()
+  } catch {}
 }
 
 cli.responders.listLogs = function () {
