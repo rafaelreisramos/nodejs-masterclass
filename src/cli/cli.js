@@ -5,6 +5,7 @@ import os from "node:os"
 import v8 from "node:v8"
 import helpers from "../utils/helpers.js"
 import _data from "../lib/data.js"
+import _logs from "../lib/logs.js"
 
 const debug = util.debuglog("cli")
 class Emitter extends EventEmitter {}
@@ -22,8 +23,8 @@ emitter
   .on("list checks", async (str) => {
     await cli.responders.listChecks(str)
   })
-  .on("list logs", () => {
-    cli.responders.listLogs()
+  .on("list logs", async () => {
+    await cli.responders.listLogs()
   })
   .on("list users", async () => {
     await cli.responders.listUsers()
@@ -60,7 +61,7 @@ cli.responders.help = function () {
       "Show a list of all the active checks in the system, including their state. The '--up' and '--down' flags are both optional.",
     "more check info --{checkId}": "Show details of a specific check",
     "list logs":
-      "Show a list of all the log files available to be read (compressed and uncompressed)",
+      "Show a list of all the log files available to be read (compressed only)",
     "more log info --{filename}": "Show details of a specified log file",
   }
 
@@ -128,8 +129,21 @@ cli.responders.listChecks = async function (str) {
   } catch {}
 }
 
-cli.responders.listLogs = function () {
-  console.log("You asked to list logs")
+const UUID_LENGTH = 36
+cli.responders.listLogs = async function () {
+  try {
+    const logFiles = await _logs.list(true)
+    if (!logFiles.length) {
+      throw new Error()
+    }
+    const compressedLogFiles = logFiles.filter(
+      (file) => file.length > UUID_LENGTH
+    )
+
+    cli.verticalSpace()
+    compressedLogFiles.forEach((filename) => console.log(filename))
+    cli.verticalSpace()
+  } catch {}
 }
 
 cli.responders.listUsers = async function () {
