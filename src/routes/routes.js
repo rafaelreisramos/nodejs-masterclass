@@ -76,7 +76,7 @@ function errorRoute(_, callback) {
 }
 
 const routes = {
-  alive: (_, callback) => {
+  "api/alive": (_, callback) => {
     callback(200, { route: "alive" })
   },
   "": handlers.index,
