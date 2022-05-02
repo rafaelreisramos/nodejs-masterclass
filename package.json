@@ -8,7 +8,8 @@
     "start:dev": "NODE_ENV=development nodemon src/index.js",
     "start": "NODE_ENV=development node src/index.js",
     "prod": "NODE_ENV=production node src/index.js",
-    "test": "node src/test/test.js"
+    "test": "node src/test/unit.js",
+    "test:e2e": "node src/test/e2e.js"
   },
   "keywords": [],
   "author": "",
