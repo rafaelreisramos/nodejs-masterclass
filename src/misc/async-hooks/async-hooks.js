@@ -1,14 +1,8 @@
 import { executionAsyncId, createHook } from "node:async_hooks"
 import fs from "node:fs"
 
-const targetExecutionContext = false
-
 const whatTimeIsIt = function (callback) {
   setInterval(() => {
-    fs.writeSync(
-      1,
-      `When the setInterval runs, the execution context is ${executionAsyncId()}\n`
-    )
     callback(Date.now())
   }, 1000) // 1 second
 }
@@ -17,21 +11,31 @@ whatTimeIsIt((time) => {
   fs.writeSync(1, `The time is ${time}\n`)
 })
 
+const { fd } = process.stdout
+let indent = 0
 const hooks = {
-  init(id, type, triggerId, resource) {
-    fs.writeSync(1, `init ${id}\n`)
+  init(asyncId, type, triggerAsyncId) {
+    const eid = executionAsyncId()
+    const indentStr = " ".repeat(indent)
+    fs.writeSync(
+      fd,
+      `${indentStr}${type}(${asyncId}):` +
+        ` trigger: ${triggerAsyncId} execution: ${eid}\n`
+    )
   },
-  before(id) {
-    fs.writeSync(1, `before ${id}\n`)
+  before(asyncId) {
+    const indentStr = " ".repeat(indent)
+    fs.writeSync(fd, `${indentStr}before:  ${asyncId}\n`)
+    indent += 2
   },
-  after(id) {
-    fs.writeSync(1, `after ${id}\n`)
+  after(asyncId) {
+    indent -= 2
+    const indentStr = " ".repeat(indent)
+    fs.writeSync(fd, `${indentStr}after:  ${asyncId}\n`)
   },
-  destroy(id) {
-    fs.writeSync(1, `destroy ${id}\n`)
-  },
-  promiseResolve(id) {
-    fs.writeSync(1, `promiseResolve ${id}\n`)
+  destroy(asyncId) {
+    const indentStr = " ".repeat(indent)
+    fs.writeSync(fd, `${indentStr}destroy:  ${asyncId}\n`)
   },
 }
 
