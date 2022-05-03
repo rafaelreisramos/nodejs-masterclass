@@ -1,3 +1,5 @@
+import { URL } from "node:url"
+import dns from "node:dns/promises"
 import config from "../../config.js"
 import _data from "../../lib/data.js"
 import helpers from "../../utils/helpers.js"
@@ -39,8 +41,17 @@ handler.post = async function ({ payload, headers }, callback) {
     })
   }
 
-  const checkId = helpers.createRandomString()
   const { protocol, url, method, successCodes, timeoutInSeconds } = payload
+  const urlToTest = new URL(`${protocol}://www.${url}`)
+  try {
+    await dns.resolve4(urlToTest.hostname)
+  } catch (e) {
+    return callback(400, {
+      error: "The url entered did not resolve to any DNS entries",
+    })
+  }
+
+  const checkId = helpers.createRandomString()
   const check = {
     id: checkId,
     phone,
