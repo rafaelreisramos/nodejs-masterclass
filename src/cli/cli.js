@@ -1,8 +1,10 @@
 import readline from "node:readline"
 import util from "node:util"
-import EventEmitter from "node:events"
+import EventEmitter, { once } from "node:events"
 import os from "node:os"
 import v8 from "node:v8"
+import childProcess from "node:child_process"
+import path from "node:path"
 import helpers from "../utils/helpers.js"
 import _data from "../lib/data.js"
 import _logs from "../lib/logs.js"
@@ -132,7 +134,7 @@ cli.responders.listChecks = async function (str) {
 const UUID_LENGTH = 36
 cli.responders.listLogs = async function () {
   try {
-    const logFiles = await _logs.list(true)
+    const logFiles = await lsLogsList(true)
     if (!logFiles.length) {
       throw new Error()
     }
@@ -144,6 +146,27 @@ cli.responders.listLogs = async function () {
     compressedLogFiles.forEach((filename) => console.log(filename))
     cli.verticalSpace()
   } catch {}
+}
+
+async function lsLogsList(includeCompressedFiles) {
+  const { stdout, stderr } = childProcess.spawn("ls", [
+    `${path.join(process.cwd(), ".logs")}`,
+  ])
+  await Promise.all([once(stdout, "readable"), once(stderr, "readable")])
+  const [data, error] = [stdout, stderr].map((stream) => stream.read())
+  if (error) return Promise.reject(new Error(error))
+  const files = data.toString().split("\n")
+  const logfiles = files.filter((file) => file !== ".gitkeep")
+  let filenames = []
+  for (const file of logfiles) {
+    if (file.includes(".log")) {
+      filenames.push(file.replace(".log", ""))
+    }
+    if (file.includes(".bz.b64") && includeCompressedFiles) {
+      filenames.push(file.replace(".bz.b64", ""))
+    }
+  }
+  return filenames
 }
 
 cli.responders.listUsers = async function () {
