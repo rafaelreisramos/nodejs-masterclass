@@ -1,6 +1,38 @@
+import { PerformanceObserver, performance } from "node:perf_hooks"
+import { debuglog } from "node:util"
 import _data from "../../lib/data.js"
 import helpers from "../../utils/helpers.js"
 import validators from "../../utils/validators.js"
+
+const debug = debuglog("performance")
+
+const performanceObserver = new PerformanceObserver((items) => {
+  debug(items.getEntries())
+})
+
+const measures = {
+  start: "Start to Now",
+  validations: {
+    start: "Start validations",
+    finish: "Finish validations",
+    name: "Validations",
+  },
+  userLookup: {
+    start: "Start user lookup",
+    finish: "Finish user lookup",
+    name: "User lookup",
+  },
+  passwordHash: {
+    start: "Start password hash",
+    finish: "Finish password hash",
+    name: "Password hash",
+  },
+  tokenCreation: {
+    start: "Start token creation",
+    finish: "Finish token creation",
+    name: "Token creation",
+  },
+}
 
 export async function verifyToken(id, phone) {
   const data = await _data.read("tokens", id)
@@ -20,17 +52,26 @@ const routes = (data, callback) => {
 const handler = {}
 
 handler.post = async function ({ payload }, callback) {
+  performanceObserver.observe({ entryTypes: ["measure"], buffered: true })
+  performance.measure(measures.start)
+
+  performance.mark(measures.validations.start)
   if (!validators.token(payload)) {
     return callback(400, { error: "Missing required fields" })
   }
+  performance.mark(measures.validations.finish)
 
   const { phone, password } = payload
+  performance.mark(measures.userLookup.start)
   const data = await _data.read("users", phone)
+  performance.mark(measures.userLookup.finish)
   if (!data) {
     return callback(400, { error: "The specified user does not exist" })
   }
 
+  performance.mark(measures.passwordHash.start)
   const hashedPassword = helpers.hashPassword(password)
+  performance.mark(measures.passwordHash.finish)
   if (!hashedPassword) {
     return callback(500, { error: "Could not hash the user's password" })
   }
@@ -38,6 +79,7 @@ handler.post = async function ({ payload }, callback) {
     return callback(400, { error: "Password did not match" })
   }
 
+  performance.mark(measures.tokenCreation.start)
   const id = helpers.createRandomString()
   const expires = Date.now() * 1000 * 60 * 60 // 1 hour
   const token = {
@@ -45,11 +87,26 @@ handler.post = async function ({ payload }, callback) {
     id,
     expires,
   }
+  performance.mark(measures.tokenCreation.finish)
   try {
     await _data.open("tokens", id, token)
   } catch (e) {
     return callback(500, { error: "Could not create the new token" })
   }
+
+  const { validations, passwordHash, userLookup, tokenCreation } = measures
+  performance.measure(validations.name, validations.start, validations.finish)
+  performance.measure(
+    passwordHash.name,
+    passwordHash.start,
+    passwordHash.finish
+  )
+  performance.measure(userLookup.name, userLookup.start, userLookup.finish)
+  performance.measure(
+    tokenCreation.name,
+    tokenCreation.start,
+    tokenCreation.finish
+  )
 
   callback(201, token)
 }

@@ -8,6 +8,7 @@
     "start:dev": "NODE_ENV=development nodemon src/index.js",
     "start": "NODE_ENV=development node src/index.js",
     "start:cluster": "NODE_ENV=development node src/index-cluster.js",
+    "start:performance": "NODE_DEBUG=performance NODE_ENV=development node src/index.js",
     "prod": "NODE_ENV=production node src/index.js",
     "test": "node src/test/unit.js",
     "test:e2e": "node src/test/e2e.js"
