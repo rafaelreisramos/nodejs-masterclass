@@ -16,28 +16,28 @@ handlers.index = async function (data, res) {
     return res.writeHead(405).end(JSON.stringify({ Allow: "GET" }))
   }
 
-  const templateData = {
-    "head.title": "Uptime Monitoring - Made Simple",
-    "head.description":
-      "We offer free, simple uptime monitoring for HTTP/HTTPS sites of all kinds.\n When your site goes down, we'll send you a text to let you know.",
-    "body.class": "index",
-  }
-
-  let document = ""
   try {
-    const page = await helpers.getPageTemplate("index.html", templateData)
-    if (!page.length) {
-      throw new Error()
+    const templateData = {
+      "head.title": "Uptime Monitoring - Made Simple",
+      "head.description":
+        "We offer free, simple uptime monitoring for HTTP/HTTPS sites of all kinds.\n When your site goes down, we'll send you a text to let you know.",
+      "body.class": "index",
     }
-    document = await helpers.documentTemplate(page, templateData)
-    if (!document.length) {
-      throw new Error()
-    }
-  } catch {
-    return res.writeHead(500).end()
-  }
 
-  res.setHeader("Content-Type", "text/html").writeHead(200).end(document)
+    const document = await helpers.getPage(templateData, "index.html")
+    if (!document) {
+      throw new Error()
+    }
+    return res
+      .setHeader("Content-Type", "text/html")
+      .writeHead(200)
+      .end(document)
+  } catch (e) {
+    const error = {
+      error: e?.message ? e.message : "an unknown error has occured",
+    }
+    return res.writeHead(500).end(JSON.stringify(error))
+  }
 }
 
 const contentTypes = {

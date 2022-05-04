@@ -28,12 +28,12 @@ async function getPageTemplate(template, data) {
   try {
     const page = await fs.readFile(path.join(pagesDir, template), "utf-8")
     if (!page.length) {
-      throw new Error("No template could be found")
+      throw new Error("no template could be found")
     }
     const interpolatedPage = interpolate(page, data)
     return interpolatedPage
   } catch (e) {
-    console.error(e.message)
+    console.error(`${e.name}: ${e.message}`)
   }
 }
 
@@ -43,15 +43,45 @@ async function documentTemplate(str, data) {
   try {
     const header = await getPageTemplate("_header.html", data)
     if (!header) {
-      throw new Error("Could not find the header template")
+      throw new Error("could not find the header template")
     }
     const footer = await getPageTemplate("_footer.html", data)
     if (!footer) {
-      throw new Error("Could not find the footer template")
+      throw new Error("could not find the footer template")
     }
     return `${header}${str}${footer}`
   } catch (e) {
-    console.log(e.message)
+    console.error(`${e.name}: ${e.message}`)
+  }
+}
+
+async function buildPageFromTemplates(data, template) {
+  let document = ""
+  try {
+    const page = await getPageTemplate(template, data)
+    if (!page) {
+      throw new Error("html template page is empty")
+    }
+    document = await documentTemplate(page, data)
+    if (!document) {
+      throw new Error("generated html page is empty")
+    }
+    return document
+  } catch (e) {
+    console.error(`${e.name}: ${e.message}`)
+  }
+}
+
+async function getPage(data, template) {
+  let document = ""
+  try {
+    document = await buildPageFromTemplates(data, template)
+    if (!document) {
+      throw new Error("could not building page from template")
+    }
+    return document
+  } catch (e) {
+    console.error(`${e.name}: ${e.message}`)
   }
 }
 
@@ -85,7 +115,7 @@ async function getStaticAsset(filename) {
     }
     return file
   } catch (e) {
-    console.error(e.message)
+    console.error(`${e.name}: ${e.message}`)
   }
 }
 
@@ -101,8 +131,8 @@ export default {
   hashPassword: hash,
   jsonParse,
   createRandomString,
-  getPageTemplate,
-  documentTemplate,
+  getPage,
   getStaticAsset,
   hoursMinutesSeconds,
+  buildPageFromTemplates,
 }
