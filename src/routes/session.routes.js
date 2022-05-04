@@ -1,17 +1,19 @@
 import _data from "../lib/data.js"
 import helpers from "../utils/helpers.js"
 
-const routes = (data, callback) => {
+const routes = (data, res) => {
+  res.setHeader("Content-Type", "application/json")
   const methods = ["get"]
   if (!methods.includes(data.method)) {
-    return callback(405)
+    res.setHeader("Access-Control-Allow-Methods", "GET")
+    return res.writeHead(405).end(JSON.stringify({ Allow: "GET" }))
   }
-  handler[data.pathname](data, callback)
+  handler[data.pathname](data, res)
 }
 
 const handler = {}
 
-handler["session/create"] = async function (data, callback) {
+handler["session/create"] = async function (_, res) {
   const templateData = {
     "head.title": "Login to your account",
     "head.description":
@@ -33,13 +35,13 @@ handler["session/create"] = async function (data, callback) {
       throw new Error()
     }
   } catch {
-    return callback(500)
+    throw new Error()
   }
 
-  callback(200, document, "text/html")
+  return res.setHeader("Content-Type", "text/html").writeHead(200).end(document)
 }
 
-handler["session/deleted"] = async function (data, callback) {
+handler["session/deleted"] = async function (_, res) {
   const templateData = {
     "head.title": "LoggedOut",
     "head.description": "You have been logged out of your account.",
@@ -60,10 +62,10 @@ handler["session/deleted"] = async function (data, callback) {
       throw new Error()
     }
   } catch {
-    return callback(500)
+    throw new Error()
   }
 
-  callback(200, document, "text/html")
+  return res.setHeader("Content-Type", "text/html").writeHead(200).end(document)
 }
 
 export default routes

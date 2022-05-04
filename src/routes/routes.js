@@ -8,10 +8,12 @@ import helpers from "../utils/helpers.js"
 
 let handlers = {}
 
-handlers.index = async function (data, callback) {
+handlers.index = async function (data, res) {
+  res.setHeader("Content-Type", "application/json")
   const methods = ["get"]
   if (!methods.includes(data.method)) {
-    return callback(405)
+    res.setHeader("Access-Control-Allow-Methods", "GET")
+    return res.writeHead(405).end(JSON.stringify({ Allow: "GET" }))
   }
 
   const templateData = {
@@ -32,10 +34,10 @@ handlers.index = async function (data, callback) {
       throw new Error()
     }
   } catch {
-    return callback(500)
+    return res.writeHead(500).end()
   }
 
-  callback(200, document, "text/html")
+  res.setHeader("Content-Type", "text/html").writeHead(200).end(document)
 }
 
 const contentTypes = {
@@ -47,10 +49,14 @@ const contentTypes = {
   plain: "text/plain",
 }
 
-handlers.static = async function (data, callback) {
+handlers.static = async function (data, res) {
+  res.setHeader("Content-Type", "application/json")
   const methods = ["get"]
   if (!methods.includes(data.method)) {
-    return callback(405)
+    return res
+      .setHeader("Access-Control-Allow-Methods", "GET")
+      .writeHead(405)
+      .end(JSON.stringify({ Allow: "GET" }))
   }
   let contentType = contentTypes["plain"]
   let asset = null
@@ -65,20 +71,26 @@ handlers.static = async function (data, callback) {
     }
     contentType = contentTypes[assetName.split(".")[1]]
   } catch {
-    return callback(404)
+    return res.writeHead(404).end()
   }
 
-  callback(200, asset, contentType)
+  return res.setHeader("Content-Type", contentType).writeHead(200).end(asset)
 }
 
-function errorRoute(_, callback) {
-  throw new Error("Example error route")
+function errorRoute(_, res) {
+  throw new Error("example error route")
+}
+
+function notFoundRoute(_, res) {
+  return res.writeHead(404).end()
+}
+
+function pingRoute(_, res) {
+  return res.writeHead(200).end(JSON.stringify({ route: "alive" }))
 }
 
 const routes = {
-  "api/alive": (_, callback) => {
-    callback(200, { route: "alive" })
-  },
+  "api/alive": pingRoute,
   "": handlers.index,
   "account/create": accountRoutes,
   "account/edit": accountRoutes,
@@ -93,9 +105,7 @@ const routes = {
   "api/checks": apiChecksRoutes,
   "example/error": errorRoute,
   public: handlers.static,
-  notFound: (_, callback) => {
-    callback(404)
-  },
+  notFound: notFoundRoute,
 }
 
 export default routes

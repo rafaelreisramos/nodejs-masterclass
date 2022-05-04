@@ -48,29 +48,16 @@ const handler = (req, res) => {
       ? routes["public"]
       : chosenHandler
     try {
-      chosenHandler(data, (status, payload, contentType) => {
-        processHandler(res, status, payload, contentType)
-      })
+      chosenHandler(data, res)
     } catch (e) {
-      console.error(e)
-      processHandler(res, 500, { Error: "An unknown error has occured" })
+      const error = {
+        error: e?.message ? e.message : "an unknown error has occured",
+      }
+      res.setHeader("Content-Type", "application/json")
+      res.writeHead(500)
+      res.end(JSON.stringify(error))
     }
   })
-}
-
-function processHandler(
-  res,
-  status = 200,
-  payload,
-  contentType = "application/json"
-) {
-  if (contentType === "application/json") {
-    payload = JSON.stringify(typeof payload === "object" ? payload : {})
-  }
-  if (contentType === "text/html") {
-    payload = typeof payload === "string" ? payload : ""
-  }
-  res.writeHead(status, { "Content-Type": `${contentType}` }).end(payload)
 }
 
 function init() {

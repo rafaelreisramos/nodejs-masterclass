@@ -1,17 +1,19 @@
 import _data from "../lib/data.js"
 import helpers from "../utils/helpers.js"
 
-const routes = (data, callback) => {
+const routes = (data, res) => {
+  res.setHeader("Content-Type", "application/json")
   const methods = ["get"]
   if (!methods.includes(data.method)) {
-    return callback(405)
+    res.setHeader("Access-Control-Allow-Methods", "GET")
+    return res.writeHead(405).end(JSON.stringify({ Allow: "GET" }))
   }
-  handler[data.pathname](data, callback)
+  handler[data.pathname](data, res)
 }
 
 const handler = {}
 
-handler["account/create"] = async function (data, callback) {
+handler["account/create"] = async function (_, res) {
   const templateData = {
     "head.title": "Create an account",
     "head.description": "Signup is easy and only takes a few seconds.",
@@ -32,13 +34,13 @@ handler["account/create"] = async function (data, callback) {
       throw new Error()
     }
   } catch {
-    return callback(500)
+    throw new Error()
   }
 
-  callback(200, document, "text/html")
+  return res.setHeader("Content-Type", "text/html").writeHead(200).end(document)
 }
 
-handler["account/edit"] = async function (data, callback) {
+handler["account/edit"] = async function (_, res) {
   const templateData = {
     "head.title": "Account Settings",
     "body.class": "accountEdit",
@@ -58,13 +60,13 @@ handler["account/edit"] = async function (data, callback) {
       throw new Error()
     }
   } catch {
-    return callback(500)
+    throw new Error()
   }
 
-  callback(200, document, "text/html")
+  return res.setHeader("Content-Type", "text/html").writeHead(200).end(document)
 }
 
-handler["account/deleted"] = async function (data, callback) {
+handler["account/deleted"] = async function (_, res) {
   const templateData = {
     "head.title": "Account Deleted",
     "head.description": "Your account has been deleted",
@@ -85,10 +87,10 @@ handler["account/deleted"] = async function (data, callback) {
       throw new Error()
     }
   } catch {
-    return callback(500)
+    throw new Error()
   }
 
-  callback(200, document, "text/html")
+  return res.setHeader("Content-Type", "text/html").writeHead(200).end(document)
 }
 
 export default routes

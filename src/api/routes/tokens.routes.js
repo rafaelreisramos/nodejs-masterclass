@@ -41,23 +41,29 @@ export async function verifyToken(id, phone) {
   return true
 }
 
-const routes = (data, callback) => {
+const routes = (data, res) => {
+  res.setHeader("Content-Type", "application/json")
   const methods = ["post", "get", "put", "delete"]
   if (!methods.includes(data.method)) {
-    return callback(405)
+    res.setHeader("Access-Control-Allow-Methods", "POST, GET, PUT, DELETE")
+    return res
+      .writeHead(405)
+      .end(JSON.stringify({ Allow: "POST, GET, PUT, DELETE" }))
   }
-  handler[data.method](data, callback)
+  handler[data.method](data, res)
 }
 
 const handler = {}
 
-handler.post = async function ({ payload }, callback) {
+handler.post = async function ({ payload }, res) {
   performanceObserver.observe({ entryTypes: ["measure"], buffered: true })
   performance.measure(measures.start)
 
   performance.mark(measures.validations.start)
   if (!validators.token(payload)) {
-    return callback(400, { error: "Missing required fields" })
+    return res
+      .writeHead(400)
+      .end(JSON.stringify({ error: "Missing required fields" }))
   }
   performance.mark(measures.validations.finish)
 
@@ -66,17 +72,21 @@ handler.post = async function ({ payload }, callback) {
   const data = await _data.read("users", phone)
   performance.mark(measures.userLookup.finish)
   if (!data) {
-    return callback(400, { error: "The specified user does not exist" })
+    return res.writeHead(400).end(
+      JSON.stringify({
+        error: "The specified user does not exist",
+      })
+    )
   }
 
   performance.mark(measures.passwordHash.start)
   const hashedPassword = helpers.hashPassword(password)
   performance.mark(measures.passwordHash.finish)
   if (!hashedPassword) {
-    return callback(500, { error: "Could not hash the user's password" })
+    throw new Error("Could not hash the user's password")
   }
   if (data.hashedPassword !== hashedPassword) {
-    return callback(400, { error: "Password did not match" })
+    throw new Error("Could not hash the user's password")
   }
 
   performance.mark(measures.tokenCreation.start)
@@ -91,7 +101,7 @@ handler.post = async function ({ payload }, callback) {
   try {
     await _data.open("tokens", id, token)
   } catch (e) {
-    return callback(500, { error: "Could not create the new token" })
+    throw new Error("Could not create the new token")
   }
 
   const { validations, passwordHash, userLookup, tokenCreation } = measures
@@ -108,65 +118,79 @@ handler.post = async function ({ payload }, callback) {
     tokenCreation.finish
   )
 
-  callback(201, token)
+  return res.writeHead(201).end(JSON.stringify(token))
 }
 
-handler.get = async function ({ searchParams }, callback) {
+handler.get = async function ({ searchParams }, res) {
   const id = searchParams.get("id")
   if (!validators.tokenId(id)) {
-    return callback(400, { error: "Missing required field" })
+    return res
+      .writeHead(400)
+      .end(JSON.stringify({ error: "Missing required fields" }))
   }
 
   const data = await _data.read("tokens", id)
   if (!data) {
-    return callback(404)
+    return res.writeHead(404).end()
   }
-  callback(200, data)
+  return res.writeHead(200).end(JSON.stringify(data))
 }
 
-handler.put = async function ({ payload }, callback) {
+handler.put = async function ({ payload }, res) {
   if (!validators.tokenRefresh(payload)) {
-    return callback(400, { error: "Missing required fields or invalid" })
+    return res
+      .writeHead(400)
+      .end(JSON.stringify({ error: "Missing required fields" }))
   }
 
   const { id } = payload
   const data = await _data.read("tokens", id)
   if (!data) {
-    return callback(400, { error: "The specified token does not exist" })
+    return res
+      .writeHead(400)
+      .end(JSON.stringify({ error: "The specified token does not exist" }))
   }
   if (data.expires < Date.now()) {
-    return callback(400, {
-      error: "The token has already expired and cannot be refreshed",
-    })
+    return res.writeHead(400).end(
+      JSON.stringify({
+        error: "The token has already expired and cannot be refreshed",
+      })
+    )
   }
   data.expires = Date.now() * 1000 * 60 * 60 // 1 hour
 
   try {
     await _data.update("tokens", id, data)
   } catch (e) {
-    return callback(500, { error: "Could not refresh the token" })
+    throw new Error("Could not refresh the token")
   }
 
-  callback(200)
+  return res.writeHead(200).end()
 }
 
-handler.delete = async function ({ searchParams }, callback) {
+handler.delete = async function ({ searchParams }, res) {
   const id = searchParams.get("id")
   if (!validators.tokenId(id)) {
-    return callback(400, { error: "Missing required field" })
+    return res
+      .writeHead(400)
+      .end(JSON.stringify({ error: "Missing required fields" }))
   }
 
   const data = await _data.read("tokens", id)
   if (!data) {
-    return callback(400, { error: "Could not find the specified token" })
+    return res.writeHead(400).end(
+      JSON.stringify({
+        error: "Could not find the specified token",
+      })
+    )
   }
   try {
     await _data.delete("tokens", id)
   } catch (e) {
-    return callback(500, { error: "Could not delete the specified token" })
+    throw new Error("Could not delete the specified token")
   }
 
-  callback(200)
+  return res.writeHead(204).end()
 }
 
 export default routes

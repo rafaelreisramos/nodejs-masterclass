@@ -1,17 +1,19 @@
 import _data from "../lib/data.js"
 import helpers from "../utils/helpers.js"
 
-const routes = (data, callback) => {
+const routes = (data, res) => {
+  res.setHeader("Content-Type", "application/json")
   const methods = ["get"]
   if (!methods.includes(data.method)) {
-    return callback(405)
+    res.setHeader("Access-Control-Allow-Methods", "GET")
+    return res.writeHead(405).end(JSON.stringify({ Allow: "GET" }))
   }
-  handler[data.pathname](data, callback)
+  handler[data.pathname](data, res)
 }
 
 const handler = {}
 
-handler["checks/create"] = async function (data, callback) {
+handler["checks/create"] = async function (_, res) {
   const templateData = {
     "head.title": "Create a New Check",
     "body.class": "checksCreate",
@@ -31,13 +33,13 @@ handler["checks/create"] = async function (data, callback) {
       throw new Error()
     }
   } catch {
-    return callback(500)
+    throw new Error()
   }
 
-  callback(200, document, "text/html")
+  return res.setHeader("Content-Type", "text/html").writeHead(200).end(document)
 }
 
-handler["checks/all"] = async function (data, callback) {
+handler["checks/all"] = async function (_, res) {
   const templateData = {
     "head.title": "Dashboard",
     "body.class": "checksList",
@@ -54,13 +56,13 @@ handler["checks/all"] = async function (data, callback) {
       throw new Error()
     }
   } catch {
-    return callback(500)
+    throw new Error()
   }
 
-  callback(200, document, "text/html")
+  return res.setHeader("Content-Type", "text/html").writeHead(200).end(document)
 }
 
-handler["checks/edit"] = async function (data, callback) {
+handler["checks/edit"] = async function (_, res) {
   const templateData = {
     "head.title": "Check Details",
     "body.class": "checksEdit",
@@ -77,10 +79,10 @@ handler["checks/edit"] = async function (data, callback) {
       throw new Error()
     }
   } catch {
-    return callback(500)
+    throw new Error()
   }
 
-  callback(200, document, "text/html")
+  return res.setHeader("Content-Type", "text/html").writeHead(200).end(document)
 }
 
 export default routes
