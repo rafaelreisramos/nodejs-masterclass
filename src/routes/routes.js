@@ -1,13 +1,13 @@
 import { URL } from "node:url"
 import { StringDecoder } from "node:string_decoder"
-
-import accountRoutes from "./account.routes.js"
-import sessionRoutes from "./session.routes.js"
-import checksRoutes from "./checks.routes.js"
 import helpers from "../utils/helpers.js"
+
+import checksRoutes from "./checks.routes.js"
 import userController from "../api/controllers/user-controller.js"
 import tokenController from "../api/controllers/token-controller.js"
 import checkController from "../api/controllers/check-controller.js"
+import accountController from "../controllers/account-controller.js"
+import sessionController from "../controllers/session-controller.js"
 
 const handler = (req, res) => {
   const url = new URL(`${req.protocol}//${req.headers.host}${req.url}`)
@@ -134,11 +134,11 @@ function pingRoute(_, res) {
 const routes = {
   "api/alive": pingRoute,
   "": handlers.index,
-  "account/create": accountRoutes,
-  "account/edit": accountRoutes,
-  "account/deleted": accountRoutes,
-  "session/create": sessionRoutes,
-  "session/deleted": sessionRoutes,
+  "account/create": accountController,
+  "account/edit": accountController,
+  "account/deleted": accountController,
+  "session/create": sessionController,
+  "session/deleted": sessionController,
   "checks/all": checksRoutes,
   "checks/create": checksRoutes,
   "checks/edit": checksRoutes,

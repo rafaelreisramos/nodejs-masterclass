@@ -1,7 +1,9 @@
 import _data from "../lib/data.js"
 import helpers from "../utils/helpers.js"
 
-const routes = async (data, res) => {
+const accountController = {}
+
+accountController.main = async (data, res) => {
   res.setHeader("Content-Type", "application/json")
   const methods = ["get"]
   if (!methods.includes(data.method)) {
@@ -10,7 +12,7 @@ const routes = async (data, res) => {
   }
 
   try {
-    const document = await handler[data.pathname]()
+    const document = await accountController[data.pathname]()
     if (!document) {
       throw new Error()
     }
@@ -26,9 +28,7 @@ const routes = async (data, res) => {
   }
 }
 
-const handler = {}
-
-handler["account/create"] = async function () {
+accountController["account/create"] = async function () {
   const templateData = {
     "head.title": "Create an account",
     "head.description": "Signup is easy and only takes a few seconds.",
@@ -38,7 +38,7 @@ handler["account/create"] = async function () {
   return await helpers.getPage(templateData, "account-create.html")
 }
 
-handler["account/edit"] = async function () {
+accountController["account/edit"] = async function () {
   const templateData = {
     "head.title": "Account Settings",
     "body.class": "accountEdit",
@@ -47,7 +47,7 @@ handler["account/edit"] = async function () {
   return await helpers.getPage(templateData, "account-edit.html")
 }
 
-handler["account/deleted"] = async function () {
+accountController["account/deleted"] = async function () {
   const templateData = {
     "head.title": "Account Deleted",
     "head.description": "Your account has been deleted",
@@ -57,4 +57,4 @@ handler["account/deleted"] = async function () {
   return await helpers.getPage(templateData, "account-deleted.html")
 }
 
-export default routes
+export default accountController.main

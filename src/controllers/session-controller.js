@@ -1,7 +1,9 @@
 import _data from "../lib/data.js"
 import helpers from "../utils/helpers.js"
 
-const routes = async (data, res) => {
+const sessionController = {}
+
+sessionController.main = async (data, res) => {
   res.setHeader("Content-Type", "application/json")
   const methods = ["get"]
   if (!methods.includes(data.method)) {
@@ -9,7 +11,7 @@ const routes = async (data, res) => {
     return res.writeHead(405).end(JSON.stringify({ Allow: "GET" }))
   }
   try {
-    const document = await handler[data.pathname]()
+    const document = await sessionController[data.pathname]()
     if (!document) {
       throw new Error()
     }
@@ -25,9 +27,7 @@ const routes = async (data, res) => {
   }
 }
 
-const handler = {}
-
-handler["session/create"] = async function () {
+sessionController["session/create"] = async function () {
   const templateData = {
     "head.title": "Login to your account",
     "head.description":
@@ -38,7 +38,7 @@ handler["session/create"] = async function () {
   return await helpers.getPage(templateData, "session-create.html")
 }
 
-handler["session/deleted"] = async function () {
+sessionController["session/deleted"] = async function () {
   const templateData = {
     "head.title": "LoggedOut",
     "head.description": "You have been logged out of your account.",
@@ -48,4 +48,4 @@ handler["session/deleted"] = async function () {
   return await helpers.getPage(templateData, "session-deleted.html")
 }
 
-export default routes
+export default sessionController.main
