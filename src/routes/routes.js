@@ -1,13 +1,13 @@
 import { URL } from "node:url"
 import { StringDecoder } from "node:string_decoder"
 
-import apiUsersRoutes from "../api/routes/users.routes.js"
-import apiTokensRoutes from "../api/routes/tokens.routes.js"
-import apiChecksRoutes from "../api/routes/checks.routes.js"
 import accountRoutes from "./account.routes.js"
 import sessionRoutes from "./session.routes.js"
 import checksRoutes from "./checks.routes.js"
 import helpers from "../utils/helpers.js"
+import userController from "../api/controllers/user-controller.js"
+import tokenController from "../api/controllers/token-controller.js"
+import checkController from "../api/controllers/check-controller.js"
 
 const handler = (req, res) => {
   const url = new URL(`${req.protocol}//${req.headers.host}${req.url}`)
@@ -142,9 +142,9 @@ const routes = {
   "checks/all": checksRoutes,
   "checks/create": checksRoutes,
   "checks/edit": checksRoutes,
-  "api/users": apiUsersRoutes,
-  "api/tokens": apiTokensRoutes,
-  "api/checks": apiChecksRoutes,
+  "api/users": userController,
+  "api/tokens": tokenController,
+  "api/checks": checkController,
   "example/error": errorRoute,
   public: handlers.static,
   notFound: notFoundRoute,

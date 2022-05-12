@@ -41,7 +41,9 @@ export async function verifyToken(id, phone) {
   return true
 }
 
-const routes = (data, res) => {
+const tokenController = {}
+
+tokenController.main = (data, res) => {
   res.setHeader("Content-Type", "application/json")
   const methods = ["post", "get", "put", "delete"]
   if (!methods.includes(data.method)) {
@@ -50,12 +52,10 @@ const routes = (data, res) => {
       .writeHead(405)
       .end(JSON.stringify({ Allow: "POST, GET, PUT, DELETE" }))
   }
-  handler[data.method](data, res)
+  tokenController[data.method](data, res)
 }
 
-const handler = {}
-
-handler.post = async function ({ payload }, res) {
+tokenController.post = async function ({ payload }, res) {
   performanceObserver.observe({ entryTypes: ["measure"], buffered: true })
   performance.measure(measures.start)
 
@@ -121,7 +121,7 @@ handler.post = async function ({ payload }, res) {
   return res.writeHead(201).end(JSON.stringify(token))
 }
 
-handler.get = async function ({ searchParams }, res) {
+tokenController.get = async function ({ searchParams }, res) {
   const id = searchParams.get("id")
   if (!validators.tokenId(id)) {
     return res
@@ -136,7 +136,7 @@ handler.get = async function ({ searchParams }, res) {
   return res.writeHead(200).end(JSON.stringify(data))
 }
 
-handler.put = async function ({ payload }, res) {
+tokenController.put = async function ({ payload }, res) {
   if (!validators.tokenRefresh(payload)) {
     return res
       .writeHead(400)
@@ -168,7 +168,7 @@ handler.put = async function ({ payload }, res) {
   return res.writeHead(200).end()
 }
 
-handler.delete = async function ({ searchParams }, res) {
+tokenController.delete = async function ({ searchParams }, res) {
   const id = searchParams.get("id")
   if (!validators.tokenId(id)) {
     return res
@@ -193,4 +193,4 @@ handler.delete = async function ({ searchParams }, res) {
   return res.writeHead(204).end()
 }
 
-export default routes
+export default tokenController.main

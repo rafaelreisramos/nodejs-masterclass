@@ -1,9 +1,11 @@
 import _data from "../../lib/data.js"
 import helpers from "../../utils/helpers.js"
 import validators from "../../utils/validators.js"
-import { verifyToken } from "./tokens.routes.js"
+import { verifyToken } from "./token-controller.js"
 
-const routes = (data, res) => {
+const UserController = {}
+
+UserController.main = (data, res) => {
   res.setHeader("Content-Type", "application/json")
   const methods = ["post", "get", "put", "delete"]
   if (!methods.includes(data.method)) {
@@ -12,12 +14,10 @@ const routes = (data, res) => {
       .writeHead(405)
       .end(JSON.stringify({ Allow: "POST, GET, PUT, DELETE" }))
   }
-  handler[data.method](data, res)
+  UserController[data.method](data, res)
 }
 
-const handler = {}
-
-handler.post = async function ({ payload }, res) {
+UserController.post = async function ({ payload }, res) {
   if (!validators.user(payload)) {
     return res
       .writeHead(400)
@@ -55,7 +55,7 @@ handler.post = async function ({ payload }, res) {
   return res.writeHead(201).end()
 }
 
-handler.get = async function ({ searchParams, headers }, res) {
+UserController.get = async function ({ searchParams, headers }, res) {
   const phone = searchParams.get("phone")?.trim()
   if (!validators.phone(phone)) {
     return res
@@ -81,7 +81,7 @@ handler.get = async function ({ searchParams, headers }, res) {
   return res.writeHead(200).end(JSON.stringify(data))
 }
 
-handler.put = async function ({ payload, headers }, res) {
+UserController.put = async function ({ payload, headers }, res) {
   if (!validators.userUpdate(payload)) {
     return res
       .writeHead(400)
@@ -126,7 +126,7 @@ handler.put = async function ({ payload, headers }, res) {
   return res.writeHead(200).end()
 }
 
-handler.delete = async function ({ searchParams, headers }, res) {
+UserController.delete = async function ({ searchParams, headers }, res) {
   const phone = searchParams.get("phone")?.trim()
   if (!validators.phone(phone)) {
     return res
@@ -173,4 +173,4 @@ handler.delete = async function ({ searchParams, headers }, res) {
   return res.writeHead(204).end()
 }
 
-export default routes
+export default UserController.main

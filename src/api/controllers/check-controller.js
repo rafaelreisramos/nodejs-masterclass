@@ -4,9 +4,11 @@ import config from "../../config.js"
 import _data from "../../lib/data.js"
 import helpers from "../../utils/helpers.js"
 import validators from "../../utils/validators.js"
-import { verifyToken } from "./tokens.routes.js"
+import { verifyToken } from "../controllers/token-controller.js"
 
-const routes = (data, res) => {
+const checkController = {}
+
+checkController.main = (data, res) => {
   res.setHeader("Content-Type", "application/json")
   const methods = ["post", "get", "put", "delete"]
   if (!methods.includes(data.method)) {
@@ -15,12 +17,10 @@ const routes = (data, res) => {
       .writeHead(405)
       .end(JSON.stringify({ Allow: "POST, GET, PUT, DELETE" }))
   }
-  handler[data.method](data, res)
+  checkController[data.method](data, res)
 }
 
-const handler = {}
-
-handler.post = async function ({ payload, headers }, res) {
+checkController.post = async function ({ payload, headers }, res) {
   if (!validators.check(payload)) {
     return res
       .writeHead(400)
@@ -97,7 +97,7 @@ handler.post = async function ({ payload, headers }, res) {
   return res.writeHead(201).end(JSON.stringify(check))
 }
 
-handler.get = async function ({ searchParams, headers }, res) {
+checkController.get = async function ({ searchParams, headers }, res) {
   const id = searchParams.get("id")
   if (!validators.tokenId(id)) {
     return res
@@ -128,7 +128,7 @@ handler.get = async function ({ searchParams, headers }, res) {
   return res.writeHead(200).end(JSON.stringify(check))
 }
 
-handler.put = async function ({ payload, headers }, res) {
+checkController.put = async function ({ payload, headers }, res) {
   if (!validators.checkUpdate(payload)) {
     return res
       .writeHead(400)
@@ -170,7 +170,7 @@ handler.put = async function ({ payload, headers }, res) {
   return res.writeHead(200).end()
 }
 
-handler.delete = async function ({ searchParams, headers }, res) {
+checkController.delete = async function ({ searchParams, headers }, res) {
   const id = searchParams.get("id")
   if (!validators.tokenId(id)) {
     return res.writeHead(403).end(
@@ -230,4 +230,4 @@ handler.delete = async function ({ searchParams, headers }, res) {
   return res.writeHead(204).end()
 }
 
-export default routes
+export default checkController.main
