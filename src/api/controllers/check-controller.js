@@ -3,9 +3,9 @@ import dns from "node:dns/promises"
 import config from "../../config.js"
 import _data from "../../lib/data.js"
 import User from "../models/User.js"
+import Token from "../models/Token.js"
 import helpers from "../../utils/helpers.js"
 import validators from "../../utils/validators.js"
-import { verifyToken } from "../controllers/token-controller.js"
 
 const checkController = {}
 
@@ -29,7 +29,7 @@ checkController.post = async function ({ payload, headers }, res) {
   }
 
   const id = headers.tokenid
-  const token = await _data.read("tokens", id)
+  const token = await Token.findOne(id)
   if (!token) {
     return res.writeHead(403).end(
       JSON.stringify({
@@ -117,7 +117,7 @@ checkController.get = async function ({ searchParams, headers }, res) {
 
   const { phone } = check
   const tokenId = headers.tokenid
-  const tokenIsValid = await verifyToken(tokenId, phone)
+  const tokenIsValid = await Token.verify(tokenId, phone)
   if (!tokenIsValid) {
     return res.writeHead(403).end(
       JSON.stringify({
@@ -148,7 +148,7 @@ checkController.put = async function ({ payload, headers }, res) {
 
   const tokenId = headers.tokenid
   const { phone } = check
-  const tokenIsValid = await verifyToken(tokenId, phone)
+  const tokenIsValid = await Token.verify(tokenId, phone)
   if (!tokenIsValid) {
     return res.writeHead(403).end(
       JSON.stringify({
@@ -192,7 +192,7 @@ checkController.delete = async function ({ searchParams, headers }, res) {
 
   const { phone } = check
   const tokenId = headers.tokenid
-  const tokenIsValid = await verifyToken(tokenId, phone)
+  const tokenIsValid = await Token.verify(tokenId, phone)
   if (!tokenIsValid) {
     return res.writeHead(403).end(
       JSON.stringify({

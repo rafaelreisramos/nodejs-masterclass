@@ -1,8 +1,8 @@
 import _data from "../../lib/data.js"
 import User from "../models/User.js"
+import Token from "../models/Token.js"
 import helpers from "../../utils/helpers.js"
 import validators from "../../utils/validators.js"
-import { verifyToken } from "./token-controller.js"
 
 const UserController = {}
 
@@ -66,7 +66,7 @@ UserController.get = async function ({ searchParams, headers }, res) {
   }
 
   const tokenId = headers.tokenid
-  const tokenIsValid = await verifyToken(tokenId, phone)
+  const tokenIsValid = await Token.verify(tokenId, phone)
   if (!tokenIsValid) {
     return res.writeHead(403).end(
       JSON.stringify({
@@ -92,7 +92,7 @@ UserController.put = async function ({ payload, headers }, res) {
 
   const { firstName, lastName, password, phone } = payload
   const tokenId = headers.tokenid
-  const tokenIsValid = await verifyToken(tokenId, phone)
+  const tokenIsValid = await Token.verify(tokenId, phone)
   if (!tokenIsValid) {
     return res.writeHead(403).end(
       JSON.stringify({
@@ -137,7 +137,7 @@ UserController.delete = async function ({ searchParams, headers }, res) {
   }
 
   const tokenId = headers.tokenid
-  const tokenIsValid = await verifyToken(tokenId, phone)
+  const tokenIsValid = await Token.verify(tokenId, phone)
   if (!tokenIsValid) {
     return res.writeHead(403).end(
       JSON.stringify({

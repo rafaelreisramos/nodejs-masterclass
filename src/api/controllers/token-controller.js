@@ -1,6 +1,7 @@
 import { PerformanceObserver, performance } from "node:perf_hooks"
 import { debuglog } from "node:util"
 import User from "../models/User.js"
+import Token from "../models/Token.js"
 import _data from "../../lib/data.js"
 import helpers from "../../utils/helpers.js"
 import validators from "../../utils/validators.js"
@@ -36,7 +37,7 @@ const measures = {
 }
 
 export async function verifyToken(id, phone) {
-  const data = await _data.read("tokens", id)
+  const data = await Token.findOne(id)
   if (!data) return false
   if (!(data.phone === phone && data.expires > Date.now())) return false
   return true
@@ -90,17 +91,11 @@ tokenController.post = async function ({ payload }, res) {
     throw new Error("Could not hash the user's password")
   }
 
-  performance.mark(measures.tokenCreation.start)
-  const id = helpers.createRandomString()
-  const expires = Date.now() * 1000 * 60 * 60 // 1 hour
-  const token = {
-    phone,
-    id,
-    expires,
-  }
-  performance.mark(measures.tokenCreation.finish)
+  let token = null
   try {
-    await _data.open("tokens", id, token)
+    performance.mark(measures.tokenCreation.start)
+    token = await Token.create(phone)
+    performance.mark(measures.tokenCreation.finish)
   } catch (e) {
     throw new Error("Could not create the new token")
   }
@@ -130,7 +125,7 @@ tokenController.get = async function ({ searchParams }, res) {
       .end(JSON.stringify({ error: "Missing required fields" }))
   }
 
-  const data = await _data.read("tokens", id)
+  const data = await Token.findOne(id)
   if (!data) {
     return res.writeHead(404).end()
   }
@@ -145,7 +140,7 @@ tokenController.put = async function ({ payload }, res) {
   }
 
   const { id } = payload
-  const data = await _data.read("tokens", id)
+  const data = await Token.findOne(id)
   if (!data) {
     return res
       .writeHead(400)
@@ -161,7 +156,7 @@ tokenController.put = async function ({ payload }, res) {
   data.expires = Date.now() * 1000 * 60 * 60 // 1 hour
 
   try {
-    await _data.update("tokens", id, data)
+    await Token.update(id, data)
   } catch (e) {
     throw new Error("Could not refresh the token")
   }
@@ -177,7 +172,7 @@ tokenController.delete = async function ({ searchParams }, res) {
       .end(JSON.stringify({ error: "Missing required fields" }))
   }
 
-  const data = await _data.read("tokens", id)
+  const data = await Token.findOne(id)
   if (!data) {
     return res.writeHead(400).end(
       JSON.stringify({
@@ -186,7 +181,7 @@ tokenController.delete = async function ({ searchParams }, res) {
     )
   }
   try {
-    await _data.delete("tokens", id)
+    await Token.delete(id)
   } catch (e) {
     throw new Error("Could not delete the specified token")
   }
