@@ -2,15 +2,15 @@ import _data from "../../lib/data.js"
 import helpers from "../../utils/helpers.js"
 
 class Check {
-  constructor(
+  constructor({
     id,
     phone,
     protocol,
     url,
     method,
     successCodes,
-    timeoutInSeconds
-  ) {
+    timeoutInSeconds,
+  }) {
     this.id = id
     this.phone = phone
     this.protocol = protocol
@@ -23,7 +23,11 @@ class Check {
   }
 
   static findOne = async function (id) {
-    return _data.read("checks", id)
+    const data = await _data.read("checks", id)
+    if (!data) {
+      return Promise.resolve(null)
+    }
+    return new Check(data)
   }
 
   static findAll = async function () {
@@ -40,14 +44,7 @@ class Check {
   static create = async function (data) {
     const id = helpers.createRandomString()
     _data.open("checks", id, data)
-    return { id, ...data }
-  }
-
-  static verify = async function (id, phone) {
-    const data = await this.findOne(id)
-    if (!data) return false
-    if (!(data.phone === phone && data.expires > Date.now())) return false
-    return true
+    return new Check({ id, ...data })
   }
 }
 

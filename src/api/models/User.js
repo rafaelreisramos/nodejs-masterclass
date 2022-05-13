@@ -2,18 +2,32 @@ import _data from "../../lib/data.js"
 import helpers from "../../utils/helpers.js"
 
 class User {
-  constructor(firstname, lastName, phone, password, tosAgreement) {
-    this.firstname = firstname
+  #hashedPassword
+
+  constructor({
+    firstName,
+    lastName,
+    phone,
+    hashedPassword,
+    tosAgreement,
+    checks,
+  }) {
+    this.firstName = firstName
     this.lastName = lastName
     this.phone = phone
-    this.password = password
+    this.#hashedPassword = hashedPassword
     this.tosAgreement = tosAgreement
+    this.checks = checks
 
     return this
   }
 
   static findOne = async function (phone) {
-    return _data.read("users", phone)
+    const data = await _data.read("users", phone)
+    if (!data) {
+      return Promise.resolve(null)
+    }
+    return new User(data)
   }
 
   static findAll = async function () {
@@ -27,7 +41,7 @@ class User {
   static update = async function (phone, data) {
     const { password } = data
     if (password) {
-      const hashedPassword = this.hashPassword(password)
+      const hashedPassword = helpers.hashPassword(password)
       if (!hashedPassword) {
         Promise.reject(new Error("Could not hash the user's password"))
       }
@@ -39,7 +53,7 @@ class User {
 
   static create = async function (phone, data) {
     const { password } = data
-    const hashedPassword = this.hashPassword(password)
+    const hashedPassword = helpers.hashPassword(password)
     if (!hashedPassword) {
       return Promise.reject(new Error("Could not hash the user's password"))
     }
@@ -47,22 +61,12 @@ class User {
     _data.open("users", phone, { ...data, hashedPassword })
   }
 
-  static checkPassword = async function (phone, password) {
-    let user = null
-    try {
-      user = await this.findOne(phone)
-    } catch {
-      return Promise.reject(new Error("Could not hash the user's password"))
-    }
-    const hashedPassword = this.hashPassword(password)
+  checkPassword = async function (password) {
+    const hashedPassword = helpers.hashPassword(password)
     if (!hashedPassword) {
       return Promise.reject(new Error("Could not hash the user's password"))
     }
-    return user.hashedPassword === hashedPassword ? true : false
-  }
-
-  static hashPassword = function (password) {
-    return helpers.hashPassword(password)
+    return this.#hashedPassword === hashedPassword ? true : false
   }
 }
 

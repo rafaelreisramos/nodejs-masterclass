@@ -37,7 +37,6 @@ checkController.post = async function ({ payload, headers }, res) {
       })
     )
   }
-
   const { phone } = token
   const user = await User.findOne(phone)
   if (!user) {
@@ -116,7 +115,13 @@ checkController.get = async function ({ searchParams, headers }, res) {
 
   const { phone } = check
   const tokenId = headers.tokenid
-  const tokenIsValid = await Token.verify(tokenId, phone)
+  const token = await Token.findOne(tokenId)
+  if (!token) {
+    return res
+      .writeHead(400)
+      .end(JSON.stringify({ error: "The specified token does not exist" }))
+  }
+  const tokenIsValid = await token.verify(phone)
   if (!tokenIsValid) {
     return res.writeHead(403).end(
       JSON.stringify({
@@ -147,7 +152,13 @@ checkController.put = async function ({ payload, headers }, res) {
 
   const tokenId = headers.tokenid
   const { phone } = check
-  const tokenIsValid = await Token.verify(tokenId, phone)
+  const token = await Token.findOne(tokenId)
+  if (!token) {
+    return res
+      .writeHead(400)
+      .end(JSON.stringify({ error: "The specified token does not exist" }))
+  }
+  const tokenIsValid = await token.verify(phone)
   if (!tokenIsValid) {
     return res.writeHead(403).end(
       JSON.stringify({
@@ -191,7 +202,13 @@ checkController.delete = async function ({ searchParams, headers }, res) {
 
   const { phone } = check
   const tokenId = headers.tokenid
-  const tokenIsValid = await Token.verify(tokenId, phone)
+  const token = await Token.findOne(tokenId)
+  if (!token) {
+    return res
+      .writeHead(400)
+      .end(JSON.stringify({ error: "The specified token does not exist" }))
+  }
+  const tokenIsValid = await token.verify(phone)
   if (!tokenIsValid) {
     return res.writeHead(403).end(
       JSON.stringify({

@@ -29,13 +29,6 @@ const measures = {
   },
 }
 
-export async function verifyToken(id, phone) {
-  const data = await Token.findOne(id)
-  if (!data) return false
-  if (!(data.phone === phone && data.expires > Date.now())) return false
-  return true
-}
-
 const tokenController = {}
 
 tokenController.main = (data, res) => {
@@ -64,14 +57,24 @@ tokenController.post = async function ({ payload }, res) {
 
   const { phone, password } = payload
   performance.mark(measures.userLookup.start)
-  const data = await User.checkPassword(phone, password)
-  if (!data) {
+  const user = await User.findOne(phone)
+  if (!user) {
     return res.writeHead(400).end(
       JSON.stringify({
-        error: "The specified user does not exist or password does not match",
+        error: "The specified user does not exist",
       })
     )
   }
+
+  const passwordIsValid = await user.checkPassword(password)
+  if (!passwordIsValid) {
+    return res.writeHead(400).end(
+      JSON.stringify({
+        error: "Password does not match",
+      })
+    )
+  }
+
   performance.mark(measures.userLookup.finish)
 
   let token = null
@@ -105,7 +108,9 @@ tokenController.get = async function ({ searchParams }, res) {
 
   const data = await Token.findOne(id)
   if (!data) {
-    return res.writeHead(404).end()
+    return res
+      .writeHead(400)
+      .end(JSON.stringify({ error: "The specified token does not exist" }))
   }
   return res.writeHead(200).end(JSON.stringify(data))
 }

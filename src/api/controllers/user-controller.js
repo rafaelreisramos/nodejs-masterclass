@@ -27,7 +27,6 @@ UserController.post = async function ({ payload }, res) {
 
   const { firstName, lastName, phone, password, tosAgreement } = payload
   const data = await User.findOne(phone)
-  console.log(data)
   if (data) {
     return res.writeHead(400).end(
       JSON.stringify({
@@ -45,8 +44,8 @@ UserController.post = async function ({ payload }, res) {
   }
   try {
     await User.create(phone, user)
-  } catch (e) {
-    throw new Error("Could not create the new user")
+  } catch {
+    return Promise.reject(new Error("Could not create the new user"))
   }
 
   return res.writeHead(201).end()
@@ -61,7 +60,13 @@ UserController.get = async function ({ searchParams, headers }, res) {
   }
 
   const tokenId = headers.tokenid
-  const tokenIsValid = await Token.verify(tokenId, phone)
+  const token = await Token.findOne(tokenId)
+  if (!token) {
+    return res
+      .writeHead(400)
+      .end(JSON.stringify({ error: "The specified token does not exist" }))
+  }
+  const tokenIsValid = await token.verify(phone)
   if (!tokenIsValid) {
     return res.writeHead(403).end(
       JSON.stringify({
@@ -87,7 +92,13 @@ UserController.put = async function ({ payload, headers }, res) {
 
   const { firstName, lastName, password, phone } = payload
   const tokenId = headers.tokenid
-  const tokenIsValid = await Token.verify(tokenId, phone)
+  const token = await Token.findOne(tokenId)
+  if (!token) {
+    return res
+      .writeHead(400)
+      .end(JSON.stringify({ error: "The specified token does not exist" }))
+  }
+  const tokenIsValid = await token.verify(phone)
   if (!tokenIsValid) {
     return res.writeHead(403).end(
       JSON.stringify({
@@ -126,7 +137,13 @@ UserController.delete = async function ({ searchParams, headers }, res) {
   }
 
   const tokenId = headers.tokenid
-  const tokenIsValid = await Token.verify(tokenId, phone)
+  const token = await Token.findOne(tokenId)
+  if (!token) {
+    return res
+      .writeHead(400)
+      .end(JSON.stringify({ error: "The specified token does not exist" }))
+  }
+  const tokenIsValid = await token.verify(phone)
   if (!tokenIsValid) {
     return res.writeHead(403).end(
       JSON.stringify({
