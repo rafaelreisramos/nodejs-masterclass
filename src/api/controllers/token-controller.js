@@ -2,7 +2,6 @@ import { PerformanceObserver, performance } from "node:perf_hooks"
 import { debuglog } from "node:util"
 import User from "../models/User.js"
 import Token from "../models/Token.js"
-import helpers from "../../utils/helpers.js"
 import validators from "../../utils/validators.js"
 
 const debug = debuglog("performance")
@@ -22,11 +21,6 @@ const measures = {
     start: "Start user lookup",
     finish: "Finish user lookup",
     name: "User lookup",
-  },
-  passwordHash: {
-    start: "Start password hash",
-    finish: "Finish password hash",
-    name: "Password hash",
   },
   tokenCreation: {
     start: "Start token creation",
@@ -70,25 +64,15 @@ tokenController.post = async function ({ payload }, res) {
 
   const { phone, password } = payload
   performance.mark(measures.userLookup.start)
-  const data = await User.findOne(phone)
-  performance.mark(measures.userLookup.finish)
+  const data = await User.checkPassword(phone, password)
   if (!data) {
     return res.writeHead(400).end(
       JSON.stringify({
-        error: "The specified user does not exist",
+        error: "The specified user does not exist or password does not match",
       })
     )
   }
-
-  performance.mark(measures.passwordHash.start)
-  const hashedPassword = helpers.hashPassword(password)
-  performance.mark(measures.passwordHash.finish)
-  if (!hashedPassword) {
-    throw new Error("Could not hash the user's password")
-  }
-  if (data.hashedPassword !== hashedPassword) {
-    throw new Error("Could not hash the user's password")
-  }
+  performance.mark(measures.userLookup.finish)
 
   let token = null
   try {
@@ -99,13 +83,8 @@ tokenController.post = async function ({ payload }, res) {
     throw new Error("Could not create the new token")
   }
 
-  const { validations, passwordHash, userLookup, tokenCreation } = measures
+  const { validations, userLookup, tokenCreation } = measures
   performance.measure(validations.name, validations.start, validations.finish)
-  performance.measure(
-    passwordHash.name,
-    passwordHash.start,
-    passwordHash.finish
-  )
   performance.measure(userLookup.name, userLookup.start, userLookup.finish)
   performance.measure(
     tokenCreation.name,

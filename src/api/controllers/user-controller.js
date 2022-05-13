@@ -36,16 +36,11 @@ UserController.post = async function ({ payload }, res) {
     )
   }
 
-  const hashedPassword = helpers.hashPassword(password)
-  if (!hashedPassword) {
-    throw new Error("Could not hash the user's password")
-  }
-
   const user = {
     firstName,
     lastName,
     phone,
-    hashedPassword,
+    password,
     tosAgreement,
   }
   try {
@@ -111,13 +106,7 @@ UserController.put = async function ({ payload, headers }, res) {
   }
   if (firstName) data.firstName = firstName
   if (lastName) data.lastName = lastName
-  if (password) {
-    const hashedPassword = helpers.hashPassword(password)
-    if (!hashedPassword) {
-      throw new Error("Could not hash the user's password")
-    }
-    data.hashedPassword = hashedPassword
-  }
+  if (password) data.password = password
 
   try {
     await User.update(phone, data)

@@ -25,20 +25,45 @@ class User {
   }
 
   static update = async function (phone, data) {
+    const { password } = data
+    if (password) {
+      const hashedPassword = this.hashPassword(password)
+      if (!hashedPassword) {
+        Promise.reject(new Error("Could not hash the user's password"))
+      }
+      delete data.password
+      data.hashedPassword = hashedPassword
+    }
     _data.update("users", phone, data)
   }
 
   static create = async function (phone, data) {
-    _data.open("users", phone, data)
+    const { password } = data
+    const hashedPassword = this.hashPassword(password)
+    if (!hashedPassword) {
+      return Promise.reject(new Error("Could not hash the user's password"))
+    }
+    delete data.password
+    _data.open("users", phone, { ...data, hashedPassword })
+  }
+
+  static checkPassword = async function (phone, password) {
+    let user = null
+    try {
+      user = await this.findOne(phone)
+    } catch {
+      return Promise.reject(new Error("Could not hash the user's password"))
+    }
+    const hashedPassword = this.hashPassword(password)
+    if (!hashedPassword) {
+      return Promise.reject(new Error("Could not hash the user's password"))
+    }
+    return user.hashedPassword === hashedPassword ? true : false
+  }
+
+  static hashPassword = function (password) {
+    return helpers.hashPassword(password)
   }
 }
-
-// User.prototype.hashPassword = function (password) {
-//   return hashPassword(password)
-// }
-
-// User.prototype.checkPassword = function (password) {
-//   password === hashPassword(password) ? true : false
-// }
 
 export default User
