@@ -1,4 +1,5 @@
 import _data from "../../lib/data.js"
+import User from "../models/User.js"
 import helpers from "../../utils/helpers.js"
 import validators from "../../utils/validators.js"
 import { verifyToken } from "./token-controller.js"
@@ -25,7 +26,8 @@ UserController.post = async function ({ payload }, res) {
   }
 
   const { firstName, lastName, phone, password, tosAgreement } = payload
-  const data = await _data.read("users", phone)
+  const data = await User.findOne(phone)
+  console.log(data)
   if (data) {
     return res.writeHead(400).end(
       JSON.stringify({
@@ -47,7 +49,7 @@ UserController.post = async function ({ payload }, res) {
     tosAgreement,
   }
   try {
-    await _data.open("users", phone, user)
+    await User.create(phone, user)
   } catch (e) {
     throw new Error("Could not create the new user")
   }
@@ -73,7 +75,7 @@ UserController.get = async function ({ searchParams, headers }, res) {
     )
   }
 
-  const data = await _data.read("users", phone)
+  const data = await User.findOne(phone)
   if (!data) {
     return res.writeHead(404).end()
   }
@@ -99,7 +101,7 @@ UserController.put = async function ({ payload, headers }, res) {
     )
   }
 
-  const data = await _data.read("users", phone)
+  const data = await User.findOne(phone)
   if (!data) {
     return res.writeHead(400).end(
       JSON.stringify({
@@ -118,7 +120,7 @@ UserController.put = async function ({ payload, headers }, res) {
   }
 
   try {
-    await _data.update("users", phone, data)
+    await User.update(phone, data)
   } catch (e) {
     throw new Error("Could not update the user")
   }
@@ -144,7 +146,7 @@ UserController.delete = async function ({ searchParams, headers }, res) {
     )
   }
 
-  const data = await _data.read("users", phone)
+  const data = await User.findOne(phone)
   if (!data) {
     return res.writeHead(400).end(
       JSON.stringify({
@@ -153,7 +155,7 @@ UserController.delete = async function ({ searchParams, headers }, res) {
     )
   }
   try {
-    await _data.delete("users", phone)
+    await User.delete(phone)
   } catch (e) {
     throw new Error("Could not delete the specified user")
   }

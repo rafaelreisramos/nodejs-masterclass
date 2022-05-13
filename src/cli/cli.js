@@ -7,6 +7,7 @@ import childProcess from "node:child_process"
 import path from "node:path"
 import helpers from "../utils/helpers.js"
 import _data from "../lib/data.js"
+import User from "../api/models/User.js"
 import _logs from "../lib/logs.js"
 
 const debug = util.debuglog("cli")
@@ -171,12 +172,12 @@ async function lsLogsList(includeCompressedFiles) {
 
 cli.responders.listUsers = async function () {
   try {
-    const usersIds = await _data.list("users")
+    const usersIds = await User.findAll()
     if (!usersIds) {
       throw new Error()
     }
     cli.verticalSpace()
-    const promises = usersIds.map((id) => _data.read("users", id))
+    const promises = usersIds.map((id) => User.findOne(id))
     const promisesResults = await Promise.allSettled(promises)
     const lines = promisesResults.map(({ status, value: user }) => {
       if (status === "fulfilled")
@@ -236,7 +237,7 @@ cli.responders.userInfo = async function (str) {
     if (!userId) {
       throw new Error()
     }
-    const user = await _data.read("users", userId)
+    const user = await User.findOne(userId)
     if (!user) {
       throw new Error()
     }

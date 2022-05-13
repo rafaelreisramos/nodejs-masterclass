@@ -2,6 +2,7 @@ import { URL } from "node:url"
 import dns from "node:dns/promises"
 import config from "../../config.js"
 import _data from "../../lib/data.js"
+import User from "../models/User.js"
 import helpers from "../../utils/helpers.js"
 import validators from "../../utils/validators.js"
 import { verifyToken } from "../controllers/token-controller.js"
@@ -38,7 +39,7 @@ checkController.post = async function ({ payload, headers }, res) {
   }
 
   const { phone } = token
-  const user = await _data.read("users", phone)
+  const user = await User.finOne(phone)
   if (!user) {
     return res.writeHead(400).end(
       JSON.stringify({
@@ -89,7 +90,7 @@ checkController.post = async function ({ payload, headers }, res) {
   user.checks = checks
   user.checks.push(checkId)
   try {
-    await _data.update("users", phone, user)
+    await User.update(phone, user)
   } catch (e) {
     throw new Error("Could not update the user with the new checks")
   }
@@ -206,7 +207,7 @@ checkController.delete = async function ({ searchParams, headers }, res) {
     throw new Error("Could not delete the specified check")
   }
 
-  const user = await _data.read("users", phone)
+  const user = await User.finOne(phone)
   if (!user) {
     throw new Error(
       "Could not find the user who created the check, so could not remove the check from the users checks"
@@ -222,7 +223,7 @@ checkController.delete = async function ({ searchParams, headers }, res) {
   user.checks = checks
 
   try {
-    await _data.update("users", phone, user)
+    await User.update(phone, user)
   } catch (e) {
     throw new Error("Could not update the user")
   }

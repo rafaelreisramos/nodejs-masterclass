@@ -1,5 +1,6 @@
 import { PerformanceObserver, performance } from "node:perf_hooks"
 import { debuglog } from "node:util"
+import User from "../models/User.js"
 import _data from "../../lib/data.js"
 import helpers from "../../utils/helpers.js"
 import validators from "../../utils/validators.js"
@@ -69,7 +70,7 @@ tokenController.post = async function ({ payload }, res) {
 
   const { phone, password } = payload
   performance.mark(measures.userLookup.start)
-  const data = await _data.read("users", phone)
+  const data = await User.findOne(phone)
   performance.mark(measures.userLookup.finish)
   if (!data) {
     return res.writeHead(400).end(
