@@ -1,4 +1,3 @@
-import _data from "../lib/data.js"
 import helpers from "../utils/helpers.js"
 
 const accountController = {}

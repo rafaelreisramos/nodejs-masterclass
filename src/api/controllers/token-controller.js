@@ -2,7 +2,6 @@ import { PerformanceObserver, performance } from "node:perf_hooks"
 import { debuglog } from "node:util"
 import User from "../models/User.js"
 import Token from "../models/Token.js"
-import _data from "../../lib/data.js"
 import helpers from "../../utils/helpers.js"
 import validators from "../../utils/validators.js"
 
