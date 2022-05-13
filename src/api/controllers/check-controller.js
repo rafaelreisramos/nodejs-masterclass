@@ -1,9 +1,9 @@
 import { URL } from "node:url"
 import dns from "node:dns/promises"
 import config from "../../config.js"
-import _data from "../../lib/data.js"
 import User from "../models/User.js"
 import Token from "../models/Token.js"
+import Check from "../models/Check.js"
 import helpers from "../../utils/helpers.js"
 import validators from "../../utils/validators.js"
 
@@ -39,7 +39,7 @@ checkController.post = async function ({ payload, headers }, res) {
   }
 
   const { phone } = token
-  const user = await User.finOne(phone)
+  const user = await User.findOne(phone)
   if (!user) {
     return res.writeHead(400).end(
       JSON.stringify({
@@ -70,9 +70,7 @@ checkController.post = async function ({ payload, headers }, res) {
     )
   }
 
-  const checkId = helpers.createRandomString()
-  const check = {
-    id: checkId,
+  const data = {
     phone,
     protocol,
     url,
@@ -81,14 +79,15 @@ checkController.post = async function ({ payload, headers }, res) {
     timeoutInSeconds,
   }
 
+  let check = null
   try {
-    await _data.open("checks", checkId, check)
+    check = await Check.create(data)
   } catch (e) {
     throw new Error("Could not create the new check")
   }
 
   user.checks = checks
-  user.checks.push(checkId)
+  user.checks.push(check.id)
   try {
     await User.update(phone, user)
   } catch (e) {
@@ -106,7 +105,7 @@ checkController.get = async function ({ searchParams, headers }, res) {
       .end(JSON.stringify({ error: "Missing required fields" }))
   }
 
-  const check = await _data.read("checks", id)
+  const check = await Check.findOne(id)
   if (!check) {
     return res.writeHead(400).end(
       JSON.stringify({
@@ -137,7 +136,7 @@ checkController.put = async function ({ payload, headers }, res) {
   }
 
   const { id, protocol, url, method, successCodes, timeoutInSeconds } = payload
-  const check = await _data.read("checks", id)
+  const check = await Check.findOne(id)
   if (!check) {
     return res.writeHead(400).end(
       JSON.stringify({
@@ -164,7 +163,7 @@ checkController.put = async function ({ payload, headers }, res) {
   if (timeoutInSeconds) check.timeoutInSeconds = timeoutInSeconds
 
   try {
-    await _data.update("checks", id, check)
+    await Check.update(id, check)
   } catch (e) {
     throw new Error("Could not update the check")
   }
@@ -181,7 +180,7 @@ checkController.delete = async function ({ searchParams, headers }, res) {
     )
   }
 
-  const check = await _data.read("checks", id)
+  const check = await Check.findOne(id)
   if (!check) {
     return res.writeHead(400).end(
       JSON.stringify({
@@ -202,12 +201,12 @@ checkController.delete = async function ({ searchParams, headers }, res) {
   }
 
   try {
-    await _data.delete("checks", id)
+    await Check.delete(id)
   } catch (e) {
     throw new Error("Could not delete the specified check")
   }
 
-  const user = await User.finOne(phone)
+  const user = await User.findOne(phone)
   if (!user) {
     throw new Error(
       "Could not find the user who created the check, so could not remove the check from the users checks"

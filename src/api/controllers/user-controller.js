@@ -1,6 +1,6 @@
-import _data from "../../lib/data.js"
 import User from "../models/User.js"
 import Token from "../models/Token.js"
+import Check from "../models/Check.js"
 import helpers from "../../utils/helpers.js"
 import validators from "../../utils/validators.js"
 
@@ -164,7 +164,7 @@ UserController.delete = async function ({ searchParams, headers }, res) {
   if (!validators.userChecks(checks)) checks = []
   if (checks.length > 0) {
     try {
-      await Promise.all(checks.map((id) => _data.delete("checks", id)))
+      await Promise.all(checks.map((id) => Check.delete(id)))
     } catch (e) {
       throw new Error(
         "Failed to delete checks from user. All checks may not have been deleted from the system successfully."

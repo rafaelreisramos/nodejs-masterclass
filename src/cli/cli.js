@@ -6,8 +6,8 @@ import v8 from "node:v8"
 import childProcess from "node:child_process"
 import path from "node:path"
 import helpers from "../utils/helpers.js"
-import _data from "../lib/data.js"
 import User from "../api/models/User.js"
+import Check from "../api/models/Check.js"
 import _logs from "../lib/logs.js"
 
 const debug = util.debuglog("cli")
@@ -94,11 +94,11 @@ cli.responders.exit = function () {
 cli.responders.listChecks = async function (str) {
   const command = str.toLowerCase()
   try {
-    const checksIds = await _data.list("checks")
+    const checksIds = await Check.findAll()
     if (!checksIds) {
       throw new Error()
     }
-    const promises = checksIds.map((id) => _data.read("checks", id))
+    const promises = checksIds.map((id) => Check.findOne(id))
     const promisesResults = await Promise.allSettled(promises)
     const allChecks = promisesResults.map(({ status, value: check }) => {
       if (status === "fulfilled") return check
@@ -196,7 +196,7 @@ cli.responders.checkInfo = async function (str) {
     if (!checkId) {
       throw new Error()
     }
-    const check = await _data.read("checks", checkId)
+    const check = await Check.findOne(checkId)
     if (!check) {
       throw new Error()
     }

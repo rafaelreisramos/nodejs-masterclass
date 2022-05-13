@@ -1,4 +1,4 @@
-import _data from "./lib/data.js"
+import Check from "./api/models/Check.js"
 import _logs from "./lib/logs.js"
 import sendTwilioSms from "./lib/sms-twilio.js"
 import helpers from "./utils/helpers.js"
@@ -35,7 +35,7 @@ workers.processCheckOutcome = async function (check, checkOutcome) {
 
   try {
     await workers.log(check, checkOutcome, state, alert, time)
-    await _data.update("checks", check.id, newCheck)
+    await Check.update(check.id, newCheck)
     if (!alert) {
       console.log("Check outcome has not changed, no alert needed")
       return
@@ -126,12 +126,12 @@ workers.validateCheckData = async function (check) {
 
 workers.gatherAllChecks = async function () {
   try {
-    const checks = await _data.list("checks")
+    const checks = await Check.findAll()
     if (!checks.length) {
       throw new Error("Could not find any checks to process")
     }
     for (let check of checks) {
-      const data = await _data.read("checks", check)
+      const data = await Check.findOne(check)
       await workers.validateCheckData(data)
     }
   } catch (e) {
