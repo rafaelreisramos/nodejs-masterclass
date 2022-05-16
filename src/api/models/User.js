@@ -24,13 +24,10 @@ class User {
 
   static findOne = async function (phone) {
     const data = await _data.read("users", phone)
-    if (!data) {
-      return Promise.resolve(null)
-    }
-    return new User(data)
+    return data ? new User(data) : null
   }
 
-  static findAll = async function () {
+  static findAllIds = async function () {
     return _data.list("users")
   }
 
@@ -61,11 +58,8 @@ class User {
     _data.open("users", phone, { ...data, hashedPassword })
   }
 
-  checkPassword = async function (password) {
+  checkPassword = function (password) {
     const hashedPassword = helpers.hashPassword(password)
-    if (!hashedPassword) {
-      return Promise.reject(new Error("Could not hash the user's password"))
-    }
     return this.#hashedPassword === hashedPassword ? true : false
   }
 }

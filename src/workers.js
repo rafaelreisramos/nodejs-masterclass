@@ -1,7 +1,6 @@
 import Check from "./api/models/Check.js"
 import _logs from "./lib/logs.js"
 import sendTwilioSms from "./lib/sms-twilio.js"
-import helpers from "./utils/helpers.js"
 import validators from "./utils/validators.js"
 
 const workers = {}
@@ -84,7 +83,6 @@ workers.performCheck = async function (check) {
       stack: e.stack,
     }
     if (!outcomeSent) {
-      // console.log("--------------------------")
       await workers.processCheckOutcome(check, checkOutcome)
       outcomeSent = true
     }
@@ -126,13 +124,13 @@ workers.validateCheckData = async function (check) {
 
 workers.gatherAllChecks = async function () {
   try {
-    const checks = await Check.findAll()
-    if (!checks.length) {
+    const checksIds = await Check.findAllIds()
+    if (!checksIds.length) {
       throw new Error("Could not find any checks to process")
     }
-    for (let check of checks) {
-      const data = await Check.findOne(check)
-      await workers.validateCheckData(data)
+    for (let id of checksIds) {
+      const check = await Check.findOne(id)
+      await workers.validateCheckData(check)
     }
   } catch (e) {
     console.error(e.message)

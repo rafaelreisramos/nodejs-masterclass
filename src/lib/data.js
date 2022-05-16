@@ -1,7 +1,9 @@
 import fs from "node:fs/promises"
+import util from "node:util"
 import path from "node:path"
 import helpers from "../utils/helpers.js"
 
+const debug = util.debuglog("fs-data")
 const baseDir = path.join(process.cwd(), ".data")
 
 async function fileOpen(dir, file, data) {
@@ -10,7 +12,7 @@ async function fileOpen(dir, file, data) {
     fileHandle = await fs.open(path.join(baseDir, dir, `${file}.json`), "wx")
     await fileHandle.writeFile(JSON.stringify(data))
   } catch (e) {
-    console.error(e.message)
+    debug(e.message)
   } finally {
     fileHandle?.close()
   }
@@ -23,7 +25,7 @@ async function fileUpdate(dir, file, data) {
     await fileHandle.truncate()
     await fileHandle.writeFile(JSON.stringify(data))
   } catch (e) {
-    console.error(e.message)
+    debug(e.message)
   } finally {
     fileHandle?.close()
   }
@@ -37,7 +39,7 @@ async function fileRead(dir, file) {
     )
     return helpers.jsonParse(data)
   } catch (e) {
-    console.error(e.message)
+    debug(e.message)
   }
 }
 
@@ -45,7 +47,7 @@ async function fileDelete(dir, file) {
   try {
     await fs.unlink(path.join(baseDir, dir, `${file}.json`))
   } catch (e) {
-    console.error(e.message)
+    debug(e.message)
   }
 }
 
@@ -59,7 +61,7 @@ async function fileList(dir) {
     }
     return filenames
   } catch (e) {
-    console.error(e.message)
+    debug(e.message)
   }
 }
 

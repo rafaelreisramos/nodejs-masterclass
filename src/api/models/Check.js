@@ -10,6 +10,7 @@ class Check {
     method,
     successCodes,
     timeoutInSeconds,
+    state,
   }) {
     this.id = id
     this.phone = phone
@@ -18,21 +19,20 @@ class Check {
     this.method = method
     this.successCodes = successCodes
     this.timeoutInSeconds = timeoutInSeconds
+    this.state = state
 
     return this
   }
 
   static findOne = async function (id) {
     const data = await _data.read("checks", id)
-    if (!data) {
-      return Promise.resolve(null)
-    }
-    return new Check(data)
+    return data ? new Check({ id, ...data }) : null
   }
 
-  static findAll = async function () {
+  static findAllIds = async function () {
     return _data.list("checks")
   }
+
   static delete = async function (id) {
     _data.delete("checks", id)
   }

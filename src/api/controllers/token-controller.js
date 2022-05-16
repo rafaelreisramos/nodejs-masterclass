@@ -59,20 +59,16 @@ tokenController.post = async function ({ payload }, res) {
   performance.mark(measures.userLookup.start)
   const user = await User.findOne(phone)
   if (!user) {
-    return res.writeHead(400).end(
-      JSON.stringify({
-        error: "The specified user does not exist",
-      })
-    )
+    return res
+      .writeHead(400)
+      .end(JSON.stringify({ error: "The specified user does not exist" }))
   }
 
-  const passwordIsValid = await user.checkPassword(password)
+  const passwordIsValid = user.checkPassword(password)
   if (!passwordIsValid) {
-    return res.writeHead(400).end(
-      JSON.stringify({
-        error: "Password does not match",
-      })
-    )
+    return res
+      .writeHead(400)
+      .end(JSON.stringify({ error: "Password does not match" }))
   }
 
   performance.mark(measures.userLookup.finish)
@@ -83,7 +79,9 @@ tokenController.post = async function ({ payload }, res) {
     token = await Token.create(phone)
     performance.mark(measures.tokenCreation.finish)
   } catch (e) {
-    throw new Error("Could not create the new token")
+    return res
+      .writeHead(400)
+      .end(JSON.stringify({ error: "Could not create the new token" }))
   }
 
   const { validations, userLookup, tokenCreation } = measures
@@ -106,13 +104,12 @@ tokenController.get = async function ({ searchParams }, res) {
       .end(JSON.stringify({ error: "Missing required fields" }))
   }
 
-  const data = await Token.findOne(id)
-  if (!data) {
-    return res
-      .writeHead(400)
-      .end(JSON.stringify({ error: "The specified token does not exist" }))
+  const token = await Token.findOne(id)
+  if (!token) {
+    return res.writeHead(404).end()
   }
-  return res.writeHead(200).end(JSON.stringify(data))
+
+  return res.writeHead(200).end(JSON.stringify(token))
 }
 
 tokenController.put = async function ({ payload }, res) {
@@ -123,28 +120,30 @@ tokenController.put = async function ({ payload }, res) {
   }
 
   const { id } = payload
-  const data = await Token.findOne(id)
-  if (!data) {
-    return res
-      .writeHead(400)
-      .end(JSON.stringify({ error: "The specified token does not exist" }))
+  const token = await Token.findOne(id)
+  if (!token) {
+    return res.writeHead(404).end()
   }
-  if (data.expires < Date.now()) {
+
+  if (token.expires < Date.now()) {
     return res.writeHead(400).end(
       JSON.stringify({
         error: "The token has already expired and cannot be refreshed",
       })
     )
   }
-  data.expires = Date.now() * 1000 * 60 * 60 // 1 hour
+  token.expires = Date.now() * 1000 * 60 * 60 // 1 hour
 
+  let updatedToken
   try {
-    await Token.update(id, data)
-  } catch (e) {
-    throw new Error("Could not refresh the token")
+    updatedToken = await Token.update(id, token)
+  } catch {
+    return res
+      .writeHead(400)
+      .end(JSON.stringify({ error: "Could not refresh the token" }))
   }
 
-  return res.writeHead(200).end()
+  return res.writeHead(200).end(JSON.stringify(updatedToken))
 }
 
 tokenController.delete = async function ({ searchParams }, res) {
@@ -155,18 +154,16 @@ tokenController.delete = async function ({ searchParams }, res) {
       .end(JSON.stringify({ error: "Missing required fields" }))
   }
 
-  const data = await Token.findOne(id)
-  if (!data) {
-    return res.writeHead(400).end(
-      JSON.stringify({
-        error: "Could not find the specified token",
-      })
-    )
+  const token = await Token.findOne(id)
+  if (!token) {
+    return res.writeHead(404).end()
   }
   try {
     await Token.delete(id)
-  } catch (e) {
-    throw new Error("Could not delete the specified token")
+  } catch {
+    return res
+      .status(500)
+      .end(JSON.stringify({ error: "Could not delete the specified token" }))
   }
 
   return res.writeHead(204).end()

@@ -12,10 +12,7 @@ class Token {
 
   static findOne = async function (id) {
     const data = await _data.read("tokens", id)
-    if (!data) {
-      return Promise.resolve(null)
-    }
-    return new Token(data)
+    return data ? new Token(data) : null
   }
 
   static delete = async function (id) {
@@ -33,9 +30,8 @@ class Token {
     return new Token({ id, phone, expires })
   }
 
-  verify = async function (phone) {
-    if (!(this.phone === phone && this.expires > Date.now())) return false
-    return true
+  verify = function (phone) {
+    return this.phone === phone && this.expires > Date.now() ? true : false
   }
 }
 

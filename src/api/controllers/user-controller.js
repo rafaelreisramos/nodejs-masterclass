@@ -1,7 +1,6 @@
 import User from "../models/User.js"
 import Token from "../models/Token.js"
 import Check from "../models/Check.js"
-import helpers from "../../utils/helpers.js"
 import validators from "../../utils/validators.js"
 
 const UserController = {}
@@ -25,9 +24,9 @@ UserController.post = async function ({ payload }, res) {
       .end(JSON.stringify({ error: "Missing required fields" }))
   }
 
-  const { firstName, lastName, phone, password, tosAgreement } = payload
-  const data = await User.findOne(phone)
-  if (data) {
+  const { phone } = payload
+  const user = await User.findOne(phone)
+  if (user) {
     return res.writeHead(400).end(
       JSON.stringify({
         error: "A user with that phone number already exists",
@@ -35,17 +34,11 @@ UserController.post = async function ({ payload }, res) {
     )
   }
 
-  const user = {
-    firstName,
-    lastName,
-    phone,
-    password,
-    tosAgreement,
-  }
   try {
-    await User.create(phone, user)
-  } catch {
-    return Promise.reject(new Error("Could not create the new user"))
+    await User.create(phone, payload)
+  } catch (e) {
+    const error = e.message ?? "Could not create the new user"
+    return res.writeHead(500).end(JSON.stringify({ error }))
   }
 
   return res.writeHead(201).end()
@@ -59,28 +52,21 @@ UserController.get = async function ({ searchParams, headers }, res) {
       .end(JSON.stringify({ error: "Missing required fields" }))
   }
 
-  const tokenId = headers.tokenid
-  const token = await Token.findOne(tokenId)
-  if (!token) {
+  const id = headers.tokenid
+  const token = await Token.findOne(id)
+  const tokenIsValid = token?.verify(phone)
+  if (!token || !tokenIsValid) {
     return res
-      .writeHead(400)
-      .end(JSON.stringify({ error: "The specified token does not exist" }))
-  }
-  const tokenIsValid = await token.verify(phone)
-  if (!tokenIsValid) {
-    return res.writeHead(403).end(
-      JSON.stringify({
-        error: "Missing required token in header or token is invalid",
-      })
-    )
+      .writeHead(401)
+      .end(JSON.stringify({ error: "Token is missing or invalid or expired" }))
   }
 
-  const data = await User.findOne(phone)
-  if (!data) {
+  const user = await User.findOne(phone)
+  if (!user) {
     return res.writeHead(404).end()
   }
-  delete data.hashedPassword
-  return res.writeHead(200).end(JSON.stringify(data))
+
+  return res.writeHead(200).end(JSON.stringify(user))
 }
 
 UserController.put = async function ({ payload, headers }, res) {
@@ -91,38 +77,29 @@ UserController.put = async function ({ payload, headers }, res) {
   }
 
   const { firstName, lastName, password, phone } = payload
-  const tokenId = headers.tokenid
-  const token = await Token.findOne(tokenId)
-  if (!token) {
+  const id = headers.tokenid
+  const token = await Token.findOne(id)
+  const tokenIsValid = token?.verify(phone)
+  if (!token || !tokenIsValid) {
     return res
-      .writeHead(400)
-      .end(JSON.stringify({ error: "The specified token does not exist" }))
-  }
-  const tokenIsValid = await token.verify(phone)
-  if (!tokenIsValid) {
-    return res.writeHead(403).end(
-      JSON.stringify({
-        error: "Missing required token in header or token is invalid",
-      })
-    )
+      .writeHead(401)
+      .end(JSON.stringify({ error: "Token is missing or invalid or expired" }))
   }
 
-  const data = await User.findOne(phone)
-  if (!data) {
-    return res.writeHead(400).end(
-      JSON.stringify({
-        error: "The specified user does not exist",
-      })
-    )
+  const user = await User.findOne(phone)
+  if (!user) {
+    return res.writeHead(404).end()
   }
-  if (firstName) data.firstName = firstName
-  if (lastName) data.lastName = lastName
-  if (password) data.password = password
+
+  if (firstName) user.firstName = firstName
+  if (lastName) user.lastName = lastName
+  if (password) user.password = password
 
   try {
-    await User.update(phone, data)
+    await User.update(phone, user)
   } catch (e) {
-    throw new Error("Could not update the user")
+    const error = e.message ?? "Could not update the user"
+    return res.writeHead(500).end(JSON.stringify({ error }))
   }
 
   return res.writeHead(200).end()
@@ -136,44 +113,39 @@ UserController.delete = async function ({ searchParams, headers }, res) {
       .end(JSON.stringify({ error: "Missing required fields" }))
   }
 
-  const tokenId = headers.tokenid
-  const token = await Token.findOne(tokenId)
-  if (!token) {
+  const id = headers.tokenid
+  const token = await Token.findOne(id)
+  const tokenIsValid = token?.verify(phone)
+  if (!token || !tokenIsValid) {
     return res
-      .writeHead(400)
-      .end(JSON.stringify({ error: "The specified token does not exist" }))
-  }
-  const tokenIsValid = await token.verify(phone)
-  if (!tokenIsValid) {
-    return res.writeHead(403).end(
-      JSON.stringify({
-        error: "Missing required token in header or token is invalid",
-      })
-    )
+      .writeHead(401)
+      .end(JSON.stringify({ error: "Token is missing or invalid or expired" }))
   }
 
-  const data = await User.findOne(phone)
-  if (!data) {
-    return res.writeHead(400).end(
-      JSON.stringify({
-        error: "The specified user does not exist",
-      })
-    )
+  const user = await User.findOne(phone)
+  if (!user) {
+    return res.writeHead(404).end()
   }
+
   try {
     await User.delete(phone)
   } catch (e) {
-    throw new Error("Could not delete the specified user")
+    return res
+      .writeHead(500)
+      .end(JSON.stringify({ error: "Could not delete the specified user" }))
   }
 
-  let { checks } = data
+  let { checks } = user
   if (!validators.userChecks(checks)) checks = []
   if (checks.length > 0) {
     try {
       await Promise.all(checks.map((id) => Check.delete(id)))
-    } catch (e) {
-      throw new Error(
-        "Failed to delete checks from user. All checks may not have been deleted from the system successfully."
+    } catch {
+      return res.writeHead(500).end(
+        JSON.stringify({
+          error:
+            "Failed to delete checks from user. All checks may not have been deleted from the system successfully.",
+        })
       )
     }
   }

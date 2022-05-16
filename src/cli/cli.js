@@ -94,7 +94,7 @@ cli.responders.exit = function () {
 cli.responders.listChecks = async function (str) {
   const command = str.toLowerCase()
   try {
-    const checksIds = await Check.findAll()
+    const checksIds = await Check.findAllIds()
     if (!checksIds) {
       throw new Error()
     }
@@ -112,15 +112,23 @@ cli.responders.listChecks = async function (str) {
     })
     let checksDown = []
     if (!command.includes("--up") || command.includes("--down")) {
-      checksDown = checks.filter((check) => check.state !== "up")
+      checksDown = checks.filter(
+        (check) => check.state !== "up" && check.state !== "unknown"
+      )
     }
     let checksUp = []
     if (!command.includes("--down") || command.includes("--up")) {
-      checksUp = checks.filter((check) => check.state !== "down")
+      checksUp = checks.filter(
+        (check) => check.state !== "down" && check.state !== "unknown"
+      )
+    }
+    let checksUnknown = []
+    if (!command.includes("--down") && !command.includes("--up")) {
+      checksUnknown = checks.filter((check) => check.state === "unknown")
     }
 
     cli.verticalSpace()
-    const filteredChecks = [...checksUp, ...checksDown]
+    const filteredChecks = [...checksUp, ...checksDown, ...checksUnknown]
     const lines = filteredChecks.map(
       (check) =>
         `ID: ${check.id} ${check.method.toUpperCase()} ${check.protocol}://${
@@ -172,7 +180,7 @@ async function lsLogsList(includeCompressedFiles) {
 
 cli.responders.listUsers = async function () {
   try {
-    const usersIds = await User.findAll()
+    const usersIds = await User.findAllIds()
     if (!usersIds) {
       throw new Error()
     }
@@ -197,9 +205,6 @@ cli.responders.checkInfo = async function (str) {
       throw new Error()
     }
     const check = await Check.findOne(checkId)
-    if (!check) {
-      throw new Error()
-    }
     cli.verticalSpace()
     console.dir(check, { colors: true })
     cli.verticalSpace()
@@ -237,11 +242,13 @@ cli.responders.userInfo = async function (str) {
     if (!userId) {
       throw new Error()
     }
+
     const user = await User.findOne(userId)
     if (!user) {
-      throw new Error()
+      return res
+        .writeHead(400)
+        .end(JSON.stringify({ error: "The specified user does not exist" }))
     }
-    delete user.hashedPassword
     cli.verticalSpace()
     console.dir(user, { colors: true })
     cli.verticalSpace()
@@ -302,7 +309,7 @@ cli.responders.stats = function () {
 
 cli.verticalSpace = function (lines) {
   lines = typeof lines === "number" && lines > 0 ? lines : 1
-  console.log(`${" ".repeat(lines)}`)
+  for (let line = 1; line <= lines; line++) console.log(" ")
 }
 
 cli.horizontalLine = function () {
