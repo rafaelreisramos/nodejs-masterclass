@@ -31,9 +31,9 @@ Para aprender Node.js hoje eu não aconselharia você a comprar este curso. Exis
 
 ## A oportunidade
 
-Mas do limão uma limonada.
+Mas do :lemon: uma limonada.
 
-Sempre existe uma oportunidade. Olhando os módulos resolvi aproveitar os ensinamentos do curso e impor um desafio a mim mesmo de colocar em prática uma refatoração pesada em todos o módulos com a versão mias recente do Node.js (versão 18 em maio de 2022).
+Sempre existe uma oportunidade. Olhando os módulos resolvi aproveitar os ensinamentos do curso me impor o desafio de colocar em prática uma refatoração pesada em todos o módulos com a versão mias recente do Node.js (versão 18 em maio de 2022).
 
 Seguindo a premissa original, não utilizei frameworks. Apenas instalei o `dotenv` e o `dotenv-expand` para configuração das variáveis de ambiente e o `nodemon` para restart automático no módulo de desevolvimento. Estes móduos não instalam nenhuma dependência adicional
 
